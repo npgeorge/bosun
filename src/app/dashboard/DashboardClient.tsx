@@ -459,7 +459,7 @@ export default function DashboardClient({ member, transactions, documents, userE
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 text-sm font-light focus:outline-none focus:border-gray-400 bg-white"
+                    className="px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400 bg-white"
                   >
                     <option value="all">All Statuses</option>
                     <option value="pending">Pending</option>
@@ -471,7 +471,7 @@ export default function DashboardClient({ member, transactions, documents, userE
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 text-sm font-light focus:outline-none focus:border-gray-400 bg-white"
+                    className="px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400 bg-white"
                   >
                     <option value="all">All Types</option>
                     <option value="owed">They Owe You</option>
