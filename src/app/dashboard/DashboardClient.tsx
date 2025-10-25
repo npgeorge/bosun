@@ -128,10 +128,8 @@ export default function DashboardClient({ member, transactions, userEmail, isAdm
               Transactions
             </button>
             <button
-              onClick={() => setActiveTab('settlements')}
-              className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
-                activeTab === 'settlements' ? 'bg-gray-50' : 'hover:bg-gray-50'
-              }`}
+              onClick={() => router.push('/settlements')}
+              className="w-full text-left px-4 py-3 text-sm font-light transition-colors text-black hover:bg-gray-50"
             >
               Settlements
             </button>
