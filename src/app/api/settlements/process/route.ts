@@ -3,32 +3,48 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calculateNetPositions, generateSettlements } from '@/lib/utils/netting'
 import { checkCircuitBreakers, formatCircuitBreakerResult } from '@/lib/utils/circuit-breakers'
 import { logAudit } from '@/lib/utils/audit-log'
+import { processSettlementSchema } from '@/lib/validations/transaction'
+import { createErrorResponse, logError, AuthorizationError } from '@/lib/utils/errors'
 import { NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 
 export async function POST(request: Request) {
   const startTime = Date.now()
   const supabase = await createServerSupabaseClient()
 
   // Check if user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // TODO: Check if user is admin
-  const { data: userData } = await supabase
+  // Check if user is admin
+  const { data: userData, error: userError } = await supabase
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single()
 
-  if (userData?.role !== 'admin') {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+  if (userError || !userData) {
+    return NextResponse.json({ error: 'Failed to verify user role' }, { status: 500 })
   }
 
-  // Check if this is a simulation
+  if (userData.role !== 'admin') {
+    throw new AuthorizationError('Admin access required for settlement processing')
+  }
+
+  // Validate request body
   const body = await request.json().catch(() => ({}))
-  const isSimulation = body.simulation === true
+  const validationResult = processSettlementSchema.safeParse(body)
+
+  if (!validationResult.success) {
+    return NextResponse.json({
+      error: 'Invalid request',
+      details: validationResult.error.format()
+    }, { status: 400 })
+  }
+
+  const { simulation: isSimulation } = validationResult.data
 
   try {
     // Log start of settlement process
@@ -237,22 +253,31 @@ export async function POST(request: Request) {
       circuit_breaker_warnings: circuitBreakerResult.warnings,
     })
 
-  } catch (error: any) {
-    console.error('Settlement processing error:', error)
-    
-    // Log failure
-    await logAudit({
-      action: 'settlement.failed',
-      entityType: 'settlement_cycle',
-      details: {
-        error: error.message,
-        stack: error.stack,
-      }
-    })
+  } catch (error: unknown) {
+    logError(error, { action: 'settlement_processing' })
 
-    return NextResponse.json({ 
-      error: 'Failed to process settlements',
-      details: error.message 
-    }, { status: 500 })
+    // Log failure (attempt audit log but don't throw if it fails)
+    try {
+      await logAudit({
+        action: 'settlement.failed',
+        entityType: 'settlement_cycle',
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          errorType: error instanceof Error ? error.name : typeof error,
+        }
+      })
+    } catch (auditError) {
+      logError(auditError, { action: 'audit_log_failed' })
+    }
+
+    const errorResponse = createErrorResponse(error, 'Failed to process settlements')
+    return NextResponse.json(
+      {
+        error: errorResponse.error,
+        message: errorResponse.message,
+        details: errorResponse.details
+      },
+      { status: errorResponse.statusCode }
+    )
   }
 }

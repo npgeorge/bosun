@@ -5,6 +5,8 @@ import React, { useState } from 'react'
 import { ArrowUpRight, ArrowDownLeft, Clock, DollarSign, Plus, Settings, LogOut, Play } from 'lucide-react'
 import { signOut } from '@/lib/supabase/auth'
 import { useRouter } from 'next/navigation'
+import type { SettlementResponse, SettlementErrorResponse } from '@/types/api'
+import { isSettlementError, isSettlementSimulation, isNoTransactions } from '@/types/api'
 
 interface Transaction {
   id: string
@@ -32,7 +34,7 @@ interface DashboardClientProps {
 export default function DashboardClient({ member, transactions, userEmail, isAdmin = false }: DashboardClientProps) {
   const [activeTab, setActiveTab] = useState('overview')
   const [testingSettlement, setTestingSettlement] = useState(false)
-  const [settlementResult, setSettlementResult] = useState<any>(null)
+  const [settlementResult, setSettlementResult] = useState<SettlementResponse | null>(null)
   const router = useRouter()
 
   const nextSettlement = {
@@ -58,7 +60,7 @@ export default function DashboardClient({ member, transactions, userEmail, isAdm
         body: JSON.stringify({ simulation: true })
       })
 
-      const data = await response.json()
+      const data = await response.json() as SettlementResponse
       setSettlementResult(data)
 
       if (!response.ok) {
@@ -66,7 +68,11 @@ export default function DashboardClient({ member, transactions, userEmail, isAdm
       }
     } catch (error) {
       console.error('Settlement test error:', error)
-      setSettlementResult({ error: 'Failed to test settlement' })
+      const errorResponse: SettlementErrorResponse = {
+        error: 'Failed to test settlement',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      }
+      setSettlementResult(errorResponse)
     } finally {
       setTestingSettlement(false)
     }
@@ -170,36 +176,38 @@ export default function DashboardClient({ member, transactions, userEmail, isAdm
               {/* Settlement Test Result */}
               {settlementResult && (
                 <div className={`mb-12 border p-6 ${
-                  settlementResult.error || settlementResult.violations 
-                    ? 'border-red-200 bg-red-50' 
+                  isSettlementError(settlementResult)
+                    ? 'border-red-200 bg-red-50'
                     : 'border-green-200 bg-green-50'
                 }`}>
                   <h3 className="text-lg font-medium mb-4 text-black">
-                    {settlementResult.simulation ? 'Settlement Test Result' : 'Settlement Result'}
+                    {isSettlementSimulation(settlementResult) ? 'Settlement Test Result' : 'Settlement Result'}
                   </h3>
-                  
-                  {settlementResult.error ? (
+
+                  {isSettlementError(settlementResult) ? (
                     <div className="space-y-3">
                       <p className="text-red-700 font-medium">
-                        ❌ {settlementResult.message || settlementResult.error}
+                        ❌ {settlementResult.message}
                       </p>
                       {settlementResult.details && (
                         <pre className="text-xs bg-red-100 p-4 rounded overflow-auto font-mono text-red-800">
-                          {settlementResult.details}
+                          {typeof settlementResult.details === 'string'
+                            ? settlementResult.details
+                            : JSON.stringify(settlementResult.details, null, 2)}
                         </pre>
                       )}
                       {settlementResult.violations && settlementResult.violations.length > 0 && (
                         <div className="mt-4">
                           <p className="font-medium text-red-800 mb-2">Circuit Breaker Violations:</p>
                           <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
-                            {settlementResult.violations.map((v: any, i: number) => (
+                            {settlementResult.violations.map((v, i) => (
                               <li key={i}>{v.message}</li>
                             ))}
                           </ul>
                         </div>
                       )}
                     </div>
-                  ) : settlementResult.preview ? (
+                  ) : isSettlementSimulation(settlementResult) ? (
                     <div className="space-y-6">
                       <div className="grid grid-cols-2 gap-6">
                         <div>
@@ -228,19 +236,18 @@ export default function DashboardClient({ member, transactions, userEmail, isAdm
                         </div>
                       </div>
                       
-                      {settlementResult.circuit_breakers?.warnings && 
-                       settlementResult.circuit_breakers.warnings.length > 0 && (
+                      {settlementResult.circuit_breakers.warnings.length > 0 && (
                         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
                           <p className="font-medium text-yellow-800 mb-2">⚠️ Warnings:</p>
                           <ul className="list-disc list-inside space-y-1 text-sm text-yellow-700">
-                            {settlementResult.circuit_breakers.warnings.map((w: any, i: number) => (
+                            {settlementResult.circuit_breakers.warnings.map((w, i) => (
                               <li key={i}>{w.message}</li>
                             ))}
                           </ul>
                         </div>
                       )}
                     </div>
-                  ) : settlementResult.message ? (
+                  ) : isNoTransactions(settlementResult) ? (
                     <p className="text-gray-700 font-light">{settlementResult.message}</p>
                   ) : null}
                   
