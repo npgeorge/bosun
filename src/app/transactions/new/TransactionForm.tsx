@@ -22,10 +22,6 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  // DEBUG: Let's see what we're getting
-  console.log('Current Member ID:', currentMemberId)
-  console.log('Available Members:', members)
-  console.log('Number of members:', members.length)
   
   const [formData, setFormData] = useState({
     direction: 'owed',
@@ -94,14 +90,6 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
 
       <main className="max-w-2xl mx-auto p-8">
         <h1 className="text-4xl font-light mb-8 text-black">New Transaction</h1>
-
-        {/* DEBUG INFO - Remove this later */}
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 text-sm">
-          <div>Debug Info:</div>
-          <div>Current Member ID: {currentMemberId}</div>
-          <div>Available Members: {members.length}</div>
-          {members.length === 0 && <div className="text-red-600 font-medium">⚠️ No other members found!</div>}
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {error && (

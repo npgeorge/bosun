@@ -1,25 +1,41 @@
 // src/lib/utils/audit-log.ts
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { DatabaseError, logError } from './errors'
 
 export interface AuditLogData {
   action: string
   entityType: string
   entityId?: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
   ipAddress?: string
   userAgent?: string
 }
 
-export async function logAudit(data: AuditLogData) {
+export interface AuditLog {
+  id: string
+  user_id: string
+  action: string
+  entity_type: string
+  entity_id?: string
+  details?: Record<string, unknown>
+  ip_address?: string
+  user_agent?: string
+  timestamp: string
+}
+
+/**
+ * Log an audit event
+ * @throws {DatabaseError} if the audit log cannot be written
+ */
+export async function logAudit(data: AuditLogData): Promise<AuditLog> {
   try {
     const supabase = await createServerSupabaseClient()
-    
+
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      console.error('Cannot log audit: No authenticated user')
-      return null
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      throw new DatabaseError('Cannot log audit: No authenticated user', authError)
     }
 
     const { data: auditLog, error } = await supabase
@@ -37,32 +53,51 @@ export async function logAudit(data: AuditLogData) {
       .single()
 
     if (error) {
-      console.error('Audit log error:', error)
-      return null
+      throw new DatabaseError('Failed to write audit log', error)
     }
 
-    return auditLog
+    return auditLog as AuditLog
   } catch (error) {
-    console.error('Audit log exception:', error)
-    return null
+    logError(error, { action: 'audit_log_write', data })
+    // Re-throw instead of silently failing
+    if (error instanceof DatabaseError) {
+      throw error
+    }
+    throw new DatabaseError('Audit log exception', error)
   }
 }
 
+export interface AdminOverride {
+  id: string
+  user_id: string
+  override_type: string
+  entity_type: string
+  entity_id: string
+  original_value: unknown
+  new_value: unknown
+  reason: string
+  created_at: string
+}
+
+/**
+ * Log an admin override with full audit trail
+ * @throws {DatabaseError} if the override cannot be logged
+ */
 export async function logOverride(
   overrideType: string,
   entityType: string,
   entityId: string,
-  originalValue: any,
-  newValue: any,
+  originalValue: unknown,
+  newValue: unknown,
   reason: string
-) {
+): Promise<AdminOverride> {
   try {
     const supabase = await createServerSupabaseClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      throw new Error('No authenticated user')
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      throw new DatabaseError('No authenticated user for override', authError)
     }
 
     const { data: override, error } = await supabase
@@ -79,7 +114,9 @@ export async function logOverride(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      throw new DatabaseError('Failed to log override', error)
+    }
 
     // Also log to audit_logs
     await logAudit({
@@ -93,9 +130,12 @@ export async function logOverride(
       }
     })
 
-    return override
+    return override as AdminOverride
   } catch (error) {
-    console.error('Override log error:', error)
-    throw error
+    logError(error, { action: 'log_override', overrideType, entityType, entityId })
+    if (error instanceof DatabaseError) {
+      throw error
+    }
+    throw new DatabaseError('Failed to log override', error)
   }
 }

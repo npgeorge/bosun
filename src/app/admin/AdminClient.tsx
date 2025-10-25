@@ -3,14 +3,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Users, 
-  FileText, 
-  Activity, 
-  Settings, 
-  LogOut, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Users,
+  FileText,
+  Activity,
+  Settings,
+  LogOut,
+  CheckCircle,
+  XCircle,
   Download,
   RefreshCw,
   Play,
@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import { signOut } from '@/lib/supabase/auth'
 import { createClient } from '@/lib/supabase/client'
+import type { SettlementResponse, SettlementErrorResponse } from '@/types/api'
+import { isSettlementError, isSettlementSimulation, isSettlementSuccess, isNoTransactions } from '@/types/api'
 
 interface Application {
   id: string
@@ -103,7 +105,7 @@ export default function AdminClient({
   const [activeTab, setActiveTab] = useState('applications')
   const [processing, setProcessing] = useState<string | null>(null)
   const [settlementRunning, setSettlementRunning] = useState(false)
-  const [settlementResult, setSettlementResult] = useState<any>(null)
+  const [settlementResult, setSettlementResult] = useState<SettlementResponse | null>(null)
 
   async function handleLogout() {
     await signOut()
@@ -141,9 +143,9 @@ export default function AdminClient({
       alert('Application approved successfully!')
       router.refresh()
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Approval error:', error)
-      alert(`Failed to approve: ${error.message}`)
+      alert(`Failed to approve: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setProcessing(null)
     }
@@ -181,9 +183,9 @@ export default function AdminClient({
       alert('Application rejected')
       router.refresh()
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Rejection error:', error)
-      alert(`Failed to reject: ${error.message}`)
+      alert(`Failed to reject: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setProcessing(null)
     }
@@ -206,9 +208,9 @@ export default function AdminClient({
       a.click()
       URL.revokeObjectURL(url)
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Download error:', error)
-      alert(`Failed to download: ${error.message}`)
+      alert(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -225,17 +227,21 @@ export default function AdminClient({
         body: JSON.stringify({ simulation })
       })
 
-      const data = await response.json()
+      const data = await response.json() as SettlementResponse
       setSettlementResult(data)
 
-      if (data.success && !simulation) {
+      if (isSettlementSuccess(data) && !simulation) {
         alert('Settlement completed successfully!')
         router.refresh()
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Settlement error:', error)
-      setSettlementResult({ error: error.message })
+      const errorResponse: SettlementErrorResponse = {
+        error: 'Settlement Error',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+      setSettlementResult(errorResponse)
     } finally {
       setSettlementRunning(false)
     }
@@ -477,26 +483,26 @@ export default function AdminClient({
               {/* Settlement Result */}
               {settlementResult && (
                 <div className={`mb-8 border p-6 ${
-                  settlementResult.error || settlementResult.violations 
-                    ? 'border-red-200 bg-red-50' 
+                  isSettlementError(settlementResult)
+                    ? 'border-red-200 bg-red-50'
                     : 'border-green-200 bg-green-50'
                 }`}>
                   <h3 className="text-lg font-medium mb-4 text-black">
-                    {settlementResult.simulation ? 'Simulation Result' : 'Settlement Complete'}
+                    {isSettlementSimulation(settlementResult) ? 'Simulation Result' : 'Settlement Complete'}
                   </h3>
-                  
-                  {settlementResult.error ? (
+
+                  {isSettlementError(settlementResult) ? (
                     <div>
-                      <p className="text-red-700 font-medium">❌ {settlementResult.message || settlementResult.error}</p>
-                      {settlementResult.violations && (
+                      <p className="text-red-700 font-medium">❌ {settlementResult.message}</p>
+                      {settlementResult.violations && settlementResult.violations.length > 0 && (
                         <ul className="mt-3 list-disc list-inside space-y-1 text-sm text-red-600">
-                          {settlementResult.violations.map((v: any, i: number) => (
+                          {settlementResult.violations.map((v, i) => (
                             <li key={i}>{v.message}</li>
                           ))}
                         </ul>
                       )}
                     </div>
-                  ) : settlementResult.preview ? (
+                  ) : isSettlementSimulation(settlementResult) ? (
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-gray-600">Transactions:</span>
@@ -515,7 +521,7 @@ export default function AdminClient({
                         <span className="ml-2 font-medium text-green-600">{settlementResult.preview.estimated_savings_percentage}%</span>
                       </div>
                     </div>
-                  ) : settlementResult.success ? (
+                  ) : isSettlementSuccess(settlementResult) ? (
                     <div>
                       <p className="text-green-700 font-medium">✅ Settlement processed successfully!</p>
                       <div className="mt-3 text-sm text-gray-700">
@@ -525,9 +531,9 @@ export default function AdminClient({
                         <div>Efficiency: {settlementResult.savings_percentage}%</div>
                       </div>
                     </div>
-                  ) : (
+                  ) : isNoTransactions(settlementResult) ? (
                     <p className="text-gray-600">{settlementResult.message}</p>
-                  )}
+                  ) : null}
                   
                   <button
                     onClick={() => setSettlementResult(null)}
