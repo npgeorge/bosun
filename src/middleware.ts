@@ -1,12 +1,30 @@
 // src/middleware.ts
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { rateLimit, getRateLimitHeaders } from './middleware/rateLimit'
 
 export async function middleware(request: NextRequest) {
+  // Apply rate limiting to API routes and auth endpoints
+  if (
+    request.nextUrl.pathname.startsWith('/api/') ||
+    request.nextUrl.pathname.startsWith('/auth/')
+  ) {
+    const rateLimitResponse = rateLimit(request)
+    if (rateLimitResponse) {
+      return rateLimitResponse // Rate limit exceeded
+    }
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
+  })
+
+  // Add rate limit headers to response
+  const rateLimitHeaders = getRateLimitHeaders(request)
+  Object.entries(rateLimitHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value)
   })
 
   const supabase = createServerClient(
