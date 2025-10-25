@@ -6,6 +6,7 @@ import { logAudit } from '@/lib/utils/audit-log'
 import { processSettlementSchema } from '@/lib/validations/transaction'
 import { createErrorResponse, logError, AuthorizationError } from '@/lib/utils/errors'
 import { sendSettlementCompleteEmail } from '@/lib/email/service'
+import { alertSettlementComplete, alertSettlementFailed, alertCircuitBreakerTriggered } from '@/lib/monitoring/slack'
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
@@ -124,6 +125,13 @@ export async function POST(request: Request) {
           maxSingleSettlement,
         }
       })
+
+      // Send Slack alert for circuit breaker
+      alertCircuitBreakerTriggered({
+        violations: circuitBreakerResult.violations,
+        totalVolume,
+        memberCount: uniqueMembers.size,
+      }).catch(err => console.error('Failed to send Slack alert:', err))
 
       return NextResponse.json({
         error: 'Circuit breakers triggered',
@@ -319,6 +327,16 @@ export async function POST(request: Request) {
       }
     })
 
+    // Send Slack alert for successful settlement
+    alertSettlementComplete({
+      cycleId: cycle.id,
+      transactionsProcessed: transactions.length,
+      settlementsGenerated: settlements.length,
+      totalVolume,
+      savingsPercentage,
+      processingTime,
+    }).catch(err => console.error('Failed to send Slack alert:', err))
+
     return NextResponse.json({
       success: true,
       cycle_id: cycle.id,
@@ -346,6 +364,16 @@ export async function POST(request: Request) {
     } catch (auditError) {
       logError(auditError, { action: 'audit_log_failed' })
     }
+
+    // Send Slack alert for settlement failure
+    alertSettlementFailed({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stage: 'settlement_processing',
+      details: error instanceof Error ? {
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
+      } : undefined,
+    }).catch(err => console.error('Failed to send Slack alert:', err))
 
     const errorResponse = createErrorResponse(error, 'Failed to process settlements')
     return NextResponse.json(
