@@ -76,24 +76,54 @@ export default async function DashboardPage() {
   balance.net = balance.owed - balance.owing
 
   // Format transactions for component
-  const formattedTransactions = transactions?.slice(0, 4).map(t => ({
+  const formattedTransactions = transactions?.map(t => ({
     id: t.id,
-    counterparty: t.from_member_id === userData?.member_id 
+    counterparty: t.from_member_id === userData?.member_id
       ? t.to_member?.company_name || 'Unknown'
       : t.from_member?.company_name || 'Unknown',
     amount: Number(t.amount_usd),
     type: (t.to_member_id === userData?.member_id ? 'owed' : 'owing') as 'owed' | 'owing',
     date: new Date(t.trade_date).toISOString().split('T')[0],
-    status: t.status
+    status: t.status,
+    reference: t.reference_number || '',
+    description: t.description || '',
+    createdAt: new Date(t.created_at).toISOString().split('T')[0],
   })) || []
 
+  // Get member's documents from storage
+  const { data: documentFiles } = await supabase.storage
+    .from('member-documents')
+    .list(userData?.member_id || '', {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: 'created_at', order: 'desc' }
+    })
+
+  // Format documents for component
+  const documents = documentFiles?.map(file => {
+    const { data: { publicUrl } } = supabase.storage
+      .from('member-documents')
+      .getPublicUrl(`${userData?.member_id}/${file.name}`)
+
+    return {
+      id: file.id,
+      name: file.name,
+      size: file.metadata?.size || 0,
+      type: file.name.toLowerCase().includes('license') ? 'Trade License' :
+            file.name.toLowerCase().includes('bank') ? 'Bank Statement' : 'Other',
+      uploadedAt: file.created_at || new Date().toISOString(),
+      url: publicUrl
+    }
+  }) || []
+
   return (
-    <DashboardClient 
+    <DashboardClient
       member={{
         companyName: userData?.member?.company_name || user.email || 'Your Company',
         balance
       }}
       transactions={formattedTransactions}
+      documents={documents}
       userEmail={user.email || ''}
       isAdmin={isAdmin}
     />
