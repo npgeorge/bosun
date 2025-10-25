@@ -119,28 +119,19 @@ export default function AdminClient({
     setProcessing(applicationId)
 
     try {
-      const supabase = createClient()
+      const response = await fetch('/api/applications/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId, memberId })
+      })
 
-      // Update member status
-      const { error: memberError } = await supabase
-        .from('members')
-        .update({ kyc_status: 'approved' })
-        .eq('id', memberId)
+      const data = await response.json()
 
-      if (memberError) throw memberError
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to approve application')
+      }
 
-      // Update application status
-      const { error: appError } = await supabase
-        .from('member_applications')
-        .update({ 
-          status: 'approved',
-          reviewed_at: new Date().toISOString()
-        })
-        .eq('id', applicationId)
-
-      if (appError) throw appError
-
-      alert('Application approved successfully!')
+      alert('Application approved successfully! Approval email sent to applicant.')
       router.refresh()
 
     } catch (error: unknown) {
@@ -158,29 +149,19 @@ export default function AdminClient({
     setProcessing(applicationId)
 
     try {
-      const supabase = createClient()
+      const response = await fetch('/api/applications/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId, memberId, reason })
+      })
 
-      // Update member status
-      const { error: memberError } = await supabase
-        .from('members')
-        .update({ kyc_status: 'rejected' })
-        .eq('id', memberId)
+      const data = await response.json()
 
-      if (memberError) throw memberError
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reject application')
+      }
 
-      // Update application status
-      const { error: appError } = await supabase
-        .from('member_applications')
-        .update({ 
-          status: 'rejected',
-          rejection_reason: reason,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq('id', applicationId)
-
-      if (appError) throw appError
-
-      alert('Application rejected')
+      alert('Application rejected. Rejection email sent to applicant.')
       router.refresh()
 
     } catch (error: unknown) {
