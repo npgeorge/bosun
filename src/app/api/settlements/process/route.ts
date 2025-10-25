@@ -5,6 +5,8 @@ import { checkCircuitBreakers, formatCircuitBreakerResult } from '@/lib/utils/ci
 import { logAudit } from '@/lib/utils/audit-log'
 import { processSettlementSchema } from '@/lib/validations/transaction'
 import { createErrorResponse, logError, AuthorizationError } from '@/lib/utils/errors'
+import { sendSettlementCompleteEmail } from '@/lib/email/service'
+import { alertSettlementComplete, alertSettlementFailed, alertCircuitBreakerTriggered } from '@/lib/monitoring/slack'
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
@@ -124,6 +126,13 @@ export async function POST(request: Request) {
         }
       })
 
+      // Send Slack alert for circuit breaker
+      alertCircuitBreakerTriggered({
+        violations: circuitBreakerResult.violations,
+        totalVolume,
+        memberCount: uniqueMembers.size,
+      }).catch(err => console.error('Failed to send Slack alert:', err))
+
       return NextResponse.json({
         error: 'Circuit breakers triggered',
         message: 'Settlement halted due to safety limits',
@@ -226,7 +235,83 @@ export async function POST(request: Request) {
 
     if (cycleUpdateError) throw cycleUpdateError
 
-    // 9. Log successful completion
+    // 9. Send email notifications to all members
+    const memberIds = Array.from(uniqueMembers)
+    const { data: members, error: membersError } = await supabase
+      .from('members')
+      .select('id, company_name, contact_email')
+      .in('id', memberIds)
+
+    if (!membersError && members) {
+      // Get user contact emails
+      const { data: users } = await supabase
+        .from('users')
+        .select('member_id, email')
+        .in('member_id', memberIds)
+
+      const emailMap = new Map(users?.map(u => [u.member_id, u.email]) || [])
+
+      // Send emails to each member with their settlement info
+      for (const member of members) {
+        const email = emailMap.get(member.id) || member.contact_email
+
+        // Find settlements for this member
+        const memberSettlements = settlements.filter(s =>
+          s.fromMemberId === member.id || s.toMemberId === member.id
+        )
+
+        if (memberSettlements.length === 0) continue
+
+        // Calculate net position for this member
+        const netPosition = memberSettlements.reduce((sum, s) => {
+          if (s.fromMemberId === member.id) return sum - s.amount
+          if (s.toMemberId === member.id) return sum + s.amount
+          return sum
+        }, 0)
+
+        // Calculate gross volume for this member
+        const memberTransactions = transactions.filter(tx =>
+          tx.from_member_id === member.id || tx.to_member_id === member.id
+        )
+        const grossAmount = memberTransactions.reduce((sum, tx) => sum + Number(tx.amount_usd), 0)
+
+        // Calculate savings (assuming 2.5% wire fee vs 0.8% platform fee)
+        const wireCost = grossAmount * 0.025
+        const platformFee = grossAmount * 0.008
+        const savings = wireCost - platformFee
+
+        // Send email (don't block on email failures)
+        sendSettlementCompleteEmail({
+          to: email,
+          memberName: member.company_name,
+          settlementId: cycle.id,
+          netAmount: Math.abs(netPosition),
+          netPosition: netPosition < 0 ? 'pay' : 'receive',
+          settlementDate: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          numTransactions: memberTransactions.length,
+          grossAmount,
+          savings,
+        }).catch(error => {
+          console.error(`Failed to send settlement email to ${email}:`, error)
+          // Log but don't fail the settlement
+        })
+      }
+
+      await logAudit({
+        action: 'settlement.emails_sent',
+        entityType: 'settlement_cycle',
+        entityId: cycle.id,
+        details: {
+          emails_attempted: members.length,
+        }
+      })
+    }
+
+    // 10. Log successful completion
     const processingTime = (Date.now() - startTime) / 1000
     await logAudit({
       action: 'settlement.completed',
@@ -241,6 +326,16 @@ export async function POST(request: Request) {
         warnings: circuitBreakerResult.warnings,
       }
     })
+
+    // Send Slack alert for successful settlement
+    alertSettlementComplete({
+      cycleId: cycle.id,
+      transactionsProcessed: transactions.length,
+      settlementsGenerated: settlements.length,
+      totalVolume,
+      savingsPercentage,
+      processingTime,
+    }).catch(err => console.error('Failed to send Slack alert:', err))
 
     return NextResponse.json({
       success: true,
@@ -269,6 +364,16 @@ export async function POST(request: Request) {
     } catch (auditError) {
       logError(auditError, { action: 'audit_log_failed' })
     }
+
+    // Send Slack alert for settlement failure
+    alertSettlementFailed({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stage: 'settlement_processing',
+      details: error instanceof Error ? {
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
+      } : undefined,
+    }).catch(err => console.error('Failed to send Slack alert:', err))
 
     const errorResponse = createErrorResponse(error, 'Failed to process settlements')
     return NextResponse.json(
