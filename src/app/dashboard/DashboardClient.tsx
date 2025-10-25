@@ -451,7 +451,7 @@ export default function DashboardClient({ member, transactions, documents, userE
                       placeholder="Search by counterparty, reference, or description..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 text-sm font-light focus:outline-none focus:border-gray-400"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400"
                     />
                   </div>
 
