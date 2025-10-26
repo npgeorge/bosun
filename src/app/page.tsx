@@ -5,6 +5,7 @@ import React, { useState } from 'react'
 import { ArrowRight, Shield, Zap, TrendingDown, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { signIn, signUp } from '@/lib/supabase/auth'
+import ShipWheelLogo from '@/components/ShipWheelLogo'
 
 // Login/Signup Modal Component
 function AuthModal({ isOpen, onClose, mode }: { isOpen: boolean; onClose: () => void; mode: string }) {
@@ -183,9 +184,12 @@ export default function BosunLanding() {
       />
 
       {/* Navigation */}
-      <nav className="border-b border-gray-200">
+      <nav className="border-b border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-          <div className="text-2xl font-light tracking-wider">BOSUN</div>
+          <div className="flex items-center gap-3">
+            <ShipWheelLogo size={32} className="text-black" />
+            <div className="text-2xl font-light tracking-wider">BOSUN</div>
+          </div>
           <div className="flex gap-8 items-center">
             <a href="#benefits" className="text-sm font-light hover:text-gray-600 transition-colors">Benefits</a>
             <a href="#how" className="text-sm font-light hover:text-gray-600 transition-colors">How It Works</a>
@@ -205,27 +209,42 @@ export default function BosunLanding() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-32 pb-24">
-        <div className="max-w-3xl">
-          <h1 className="text-7xl font-light leading-tight mb-8 tracking-tight">
-            Maritime settlement,<br />reimagined
-          </h1>
-          <p className="text-xl font-light text-gray-600 mb-12 leading-relaxed">
-            Reduce transaction costs by 85%. Settle in minutes, not days. 
-            Purpose-built for the maritime industry.
-          </p>
-          <div className="flex gap-4">
-            <button 
-              onClick={() => router.push('/auth/register')}
-              className="px-8 py-4 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors flex items-center gap-2"
-            >
-              Get Started
-              <ArrowRight size={16} />
-            </button>
-            <button className="px-8 py-4 border border-gray-300 text-sm font-light hover:border-gray-400 transition-colors">
-              View Demo
-            </button>
+      {/* Hero Section with Background Image */}
+      <section className="relative min-h-[600px] flex items-center">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url(/ship-wheel.jpg)',
+            filter: 'grayscale(100%) brightness(0.4)'
+          }}
+        >
+          {/* Dark overlay for better text contrast */}
+          <div className="absolute inset-0 bg-black bg-opacity-40" />
+        </div>
+
+        {/* Content */}
+        <div className="relative max-w-7xl mx-auto px-6 py-32 w-full">
+          <div className="max-w-3xl">
+            <h1 className="text-7xl font-light leading-tight mb-8 tracking-tight text-white">
+              Maritime settlement,<br />reimagined
+            </h1>
+            <p className="text-xl font-light text-gray-200 mb-12 leading-relaxed">
+              Reduce transaction costs by 85%. Settle in minutes, not days.
+              Purpose-built for the maritime industry.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => router.push('/auth/register')}
+                className="px-8 py-4 bg-white text-black text-sm font-light hover:bg-gray-100 transition-colors flex items-center gap-2"
+              >
+                Get Started
+                <ArrowRight size={16} />
+              </button>
+              <button className="px-8 py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors">
+                View Demo
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -372,7 +391,10 @@ export default function BosunLanding() {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-4 gap-12">
             <div>
-              <div className="text-xl font-light mb-4">BOSUN</div>
+              <div className="flex items-center gap-2 mb-4">
+                <ShipWheelLogo size={24} className="text-white" />
+                <div className="text-xl font-light">BOSUN</div>
+              </div>
               <p className="text-sm font-light text-gray-400">
                 Maritime settlement infrastructure
               </p>
