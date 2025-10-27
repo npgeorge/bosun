@@ -215,7 +215,7 @@ export default function BosunLanding() {
         <div
           className="absolute inset-0 bg-center bg-cover bg-no-repeat"
           style={{
-            backgroundImage: 'url(/ship-wheel.jpg)',
+            backgroundImage: 'url(https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=1920&q=80), url(/ship-wheel.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: 'grayscale(100%) brightness(0.4)'
