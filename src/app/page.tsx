@@ -210,20 +210,21 @@ export default function BosunLanding() {
       </nav>
 
       {/* Hero Section with Background Image */}
-      <section className="relative min-h-[600px] flex items-center bg-gray-900">
-        {/* Background Image */}
+      <section className="relative min-h-[600px] flex items-center overflow-hidden">
+        {/* Background Image Layer */}
         <div
-          className="absolute inset-0 bg-center bg-cover bg-no-repeat"
+          className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url(https://images.unsplash.com/photo-1582488719899-a2a54cb479fe?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1686)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'grayscale(100%) brightness(0.4)'
+            backgroundRepeat: 'no-repeat',
+            filter: 'grayscale(100%) brightness(0.4)',
           }}
-        >
-          {/* Dark overlay for better text contrast */}
-          <div className="absolute inset-0 bg-black bg-opacity-40" />
-        </div>
+        />
+
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black opacity-40 z-1" />
 
         {/* Content */}
         <div className="relative max-w-7xl mx-auto px-6 py-32 w-full z-10">
