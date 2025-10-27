@@ -15,9 +15,9 @@ export default function ShipWheelLogo({ size = 32, className = "" }: { size?: nu
       <circle
         cx="50"
         cy="50"
-        r="45"
+        r="38"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="2"
         fill="none"
       />
 
@@ -25,47 +25,69 @@ export default function ShipWheelLogo({ size = 32, className = "" }: { size?: nu
       <circle
         cx="50"
         cy="50"
-        r="8"
+        r="10"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="2"
         fill="none"
       />
 
-      {/* 8 spokes */}
+      {/* 8 spokes with extended handles */}
       {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
         const rad = (angle * Math.PI) / 180
-        const innerX = 50 + 8 * Math.cos(rad)
-        const innerY = 50 + 8 * Math.sin(rad)
-        const outerX = 50 + 45 * Math.cos(rad)
-        const outerY = 50 + 45 * Math.sin(rad)
+
+        // Spoke from hub to rim
+        const innerX = 50 + 10 * Math.cos(rad)
+        const innerY = 50 + 10 * Math.sin(rad)
+        const rimX = 50 + 38 * Math.cos(rad)
+        const rimY = 50 + 38 * Math.sin(rad)
+
+        // Extended handle beyond rim
+        const handleStartX = 50 + 38 * Math.cos(rad)
+        const handleStartY = 50 + 38 * Math.sin(rad)
+        const handleEndX = 50 + 48 * Math.cos(rad)
+        const handleEndY = 50 + 48 * Math.sin(rad)
+
+        // Handle grip width
+        const perpRad = rad + Math.PI / 2
+        const handleWidth = 3
+        const hx1 = handleEndX + handleWidth * Math.cos(perpRad)
+        const hy1 = handleEndY + handleWidth * Math.sin(perpRad)
+        const hx2 = handleEndX - handleWidth * Math.cos(perpRad)
+        const hy2 = handleEndY - handleWidth * Math.sin(perpRad)
 
         return (
-          <line
-            key={i}
-            x1={innerX}
-            y1={innerY}
-            x2={outerX}
-            y2={outerY}
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        )
-      })}
+          <g key={i}>
+            {/* Spoke */}
+            <line
+              x1={innerX}
+              y1={innerY}
+              x2={rimX}
+              y2={rimY}
+              stroke="currentColor"
+              strokeWidth="2"
+            />
 
-      {/* 8 handles on the outer rim */}
-      {[22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5].map((angle, i) => {
-        const rad = (angle * Math.PI) / 180
-        const x = 50 + 45 * Math.cos(rad)
-        const y = 50 + 45 * Math.sin(rad)
+            {/* Extended handle beyond rim */}
+            <line
+              x1={handleStartX}
+              y1={handleStartY}
+              x2={handleEndX}
+              y2={handleEndY}
+              stroke="currentColor"
+              strokeWidth="2"
+            />
 
-        return (
-          <circle
-            key={i}
-            cx={x}
-            cy={y}
-            r="4"
-            fill="currentColor"
-          />
+            {/* Handle grip (cross bar) */}
+            <line
+              x1={hx1}
+              y1={hy1}
+              x2={hx2}
+              y2={hy2}
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </g>
         )
       })}
     </svg>
