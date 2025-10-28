@@ -116,6 +116,57 @@ export default async function DashboardPage() {
     }
   }) || []
 
+  // Get all settlements involving this member
+  const { data: settlements } = await supabase
+    .from('settlements')
+    .select(`
+      id,
+      settlement_cycle_id,
+      from_member_id,
+      to_member_id,
+      amount_usd,
+      fee_usd,
+      status,
+      created_at,
+      settlement_cycles (
+        id,
+        cycle_time,
+        total_transactions,
+        total_volume,
+        net_settlements,
+        savings_percentage,
+        status,
+        completed_at
+      )
+    `)
+    .or(`from_member_id.eq.${userData?.member_id},to_member_id.eq.${userData?.member_id}`)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  // Get member names for counterparties
+  const settlementData = settlements || []
+  const counterpartyIds = new Set<string>()
+
+  settlementData.forEach(s => {
+    if (s.from_member_id !== userData?.member_id) counterpartyIds.add(s.from_member_id)
+    if (s.to_member_id !== userData?.member_id) counterpartyIds.add(s.to_member_id)
+  })
+
+  const { data: counterparties } = await supabase
+    .from('members')
+    .select('id, company_name')
+    .in('id', Array.from(counterpartyIds))
+
+  const counterpartyMap = new Map(
+    (counterparties || []).map(cp => [cp.id, cp.company_name])
+  )
+
+  // Get transaction count for this member (all time)
+  const { count: transactionCount } = await supabase
+    .from('transactions')
+    .select('*', { count: 'exact', head: true })
+    .or(`from_member_id.eq.${userData?.member_id},to_member_id.eq.${userData?.member_id}`)
+
   return (
     <DashboardClient
       member={{
@@ -124,6 +175,10 @@ export default async function DashboardPage() {
       }}
       transactions={formattedTransactions}
       documents={documents}
+      settlements={settlementData}
+      counterpartyMap={Object.fromEntries(counterpartyMap)}
+      transactionCount={transactionCount || 0}
+      memberId={userData?.member_id || ''}
       userEmail={user.email || ''}
       isAdmin={isAdmin}
     />
