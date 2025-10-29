@@ -34,3 +34,6 @@ Thumbs.db
 
 # Supabase (just in case)
 supabase/.env
+
+# Testing
+coverage/
