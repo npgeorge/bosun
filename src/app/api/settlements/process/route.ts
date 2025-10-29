@@ -2,6 +2,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calculateNetPositions, generateSettlements } from '@/lib/utils/netting'
 import { checkCircuitBreakers, formatCircuitBreakerResult } from '@/lib/utils/circuit-breakers'
+import { dollarsToCents, centsToDollars } from '@/lib/utils/currency'
 import { logAudit } from '@/lib/utils/audit-log'
 import { processSettlementSchema } from '@/lib/validations/transaction'
 import { createErrorResponse, logError, AuthorizationError } from '@/lib/utils/errors'
@@ -78,20 +79,38 @@ export async function POST(request: Request) {
       })
     }
 
-    // 2. Calculate net positions
-    const positions = calculateNetPositions(transactions)
+    // 2. Convert transactions from DB format (dollars) to algorithm format (cents)
+    const transactionsInCents = transactions.map(tx => ({
+      id: tx.id,
+      from_member_id: tx.from_member_id,
+      to_member_id: tx.to_member_id,
+      amount_cents: dollarsToCents(Number(tx.amount_usd))
+    }))
 
-    // 3. Generate optimal settlements
+    // 3. Calculate net positions using integer cents
+    const positions = calculateNetPositions(transactionsInCents)
+
+    // 4. Generate optimal settlements
     const settlements = generateSettlements(positions)
 
-    // Calculate stats for circuit breakers
-    const totalVolume = transactions.reduce((sum, tx) => sum + Number(tx.amount_usd), 0)
+    // Calculate stats for circuit breakers (using cents, converting to dollars for circuit breaker checks)
+    const totalVolumeCents = transactionsInCents.reduce((sum, tx) => sum + tx.amount_cents, 0)
+    const totalVolume = centsToDollars(totalVolumeCents)
+
     const uniqueMembers = new Set([
       ...transactions.map(tx => tx.from_member_id),
       ...transactions.map(tx => tx.to_member_id)
     ])
-    const maxSingleSettlement = Math.max(...settlements.map(s => s.amount))
-    const maxMemberExposure = Math.max(...Array.from(positions.values()).map(p => Math.abs(p.netAmount)))
+
+    const maxSingleSettlementCents = settlements.length > 0
+      ? Math.max(...settlements.map(s => s.amountCents))
+      : 0
+    const maxSingleSettlement = centsToDollars(maxSingleSettlementCents)
+
+    const maxMemberExposureCents = Array.from(positions.values()).length > 0
+      ? Math.max(...Array.from(positions.values()).map(p => Math.abs(p.netAmountCents)))
+      : 0
+    const maxMemberExposure = centsToDollars(maxMemberExposureCents)
 
     // 4. Check circuit breakers
     const circuitBreakerResult = checkCircuitBreakers({
@@ -155,6 +174,13 @@ export async function POST(request: Request) {
         }
       })
 
+      // Calculate total fees based on TRANSACTIONS not settlements
+      const totalTransactionFeeCents = transactionsInCents.reduce((sum, tx) =>
+        sum + Math.round(tx.amount_cents * 0.008), // 0.8% fee per transaction
+        0
+      )
+      const totalTransactionFee = centsToDollars(totalTransactionFeeCents)
+
       return NextResponse.json({
         simulation: true,
         success: true,
@@ -162,6 +188,7 @@ export async function POST(request: Request) {
           transactions_to_process: transactions.length,
           settlements_generated: settlements.length,
           total_volume: totalVolume,
+          total_fees: totalTransactionFee, // Fees charged on all transactions
           estimated_savings_percentage: ((transactions.length - settlements.length) / transactions.length * 100).toFixed(2),
           unique_members: uniqueMembers.size,
           max_single_settlement: maxSingleSettlement,
@@ -171,15 +198,24 @@ export async function POST(request: Request) {
           warnings: circuitBreakerResult.warnings,
         },
         settlements: settlements.map(s => ({
+          settlement_id: s.settlementId,
           from_member_id: s.fromMemberId,
           to_member_id: s.toMemberId,
-          amount: s.amount,
-          fee: s.amount * 0.008,
+          amount: centsToDollars(s.amountCents),
+          source_transactions: s.sourceTransactionIds,
+          created_at: s.createdAt,
         }))
       })
     }
 
-    // 5. Create settlement cycle (REAL EXECUTION)
+    // 5. Calculate total fees based on all transactions (charged per transaction)
+    const totalTransactionFeeCents = transactionsInCents.reduce((sum, tx) =>
+      sum + Math.round(tx.amount_cents * 0.008), // 0.8% fee per transaction
+      0
+    )
+    const totalTransactionFee = centsToDollars(totalTransactionFeeCents)
+
+    // 6. Create settlement cycle (REAL EXECUTION)
     const { data: cycle, error: cycleError } = await supabase
       .from('settlement_cycles')
       .insert({
@@ -187,19 +223,19 @@ export async function POST(request: Request) {
         status: 'processing',
         total_transactions: transactions.length,
         total_volume: totalVolume,
+        total_fees: totalTransactionFee, // Fees based on transactions, not settlements
       })
       .select()
       .single()
 
     if (cycleError) throw cycleError
 
-    // 6. Insert settlement instructions
+    // 7. Insert settlement instructions (converting cents back to dollars for DB)
     const settlementRecords = settlements.map(s => ({
       cycle_id: cycle.id,
       from_member_id: s.fromMemberId,
       to_member_id: s.toMemberId,
-      amount_usd: s.amount,
-      fee_usd: s.amount * 0.008, // 0.8% fee
+      amount_usd: centsToDollars(s.amountCents), // Convert cents to dollars for DB
       status: 'pending'
     }))
 
@@ -262,10 +298,11 @@ export async function POST(request: Request) {
 
         if (memberSettlements.length === 0) continue
 
-        // Calculate net position for this member
+        // Calculate net position for this member (in dollars)
         const netPosition = memberSettlements.reduce((sum, s) => {
-          if (s.fromMemberId === member.id) return sum - s.amount
-          if (s.toMemberId === member.id) return sum + s.amount
+          const amountDollars = centsToDollars(s.amountCents)
+          if (s.fromMemberId === member.id) return sum - amountDollars
+          if (s.toMemberId === member.id) return sum + amountDollars
           return sum
         }, 0)
 
@@ -343,6 +380,7 @@ export async function POST(request: Request) {
       transactions_processed: transactions.length,
       settlements_generated: settlements.length,
       total_volume: totalVolume,
+      total_fees: totalTransactionFee, // Fees charged on all transactions
       savings_percentage: savingsPercentage.toFixed(2),
       processing_time_seconds: processingTime,
       circuit_breaker_warnings: circuitBreakerResult.warnings,

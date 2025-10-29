@@ -337,40 +337,18 @@ export default function DashboardClient({ member, transactions, documents, settl
                 </div>
               )}
 
-              {/* Balance Cards */}
-              <div className="grid grid-cols-3 gap-6 mb-12">
-                <div className="border border-gray-200 p-6">
-                  <div className="flex items-center gap-2 mb-3 text-black">
-                    <ArrowDownLeft size={16} strokeWidth={1} />
-                    <span className="text-xs font-light uppercase tracking-wider">You Are Owed</span>
+              {/* Account Balance */}
+              <div className="mb-12">
+                <div className="border border-gray-200 p-8 bg-gray-50">
+                  <div className="flex items-center gap-2 mb-4 text-black">
+                    <DollarSign size={20} strokeWidth={1} />
+                    <span className="text-sm font-light uppercase tracking-wider">Account Balance</span>
                   </div>
-                  <div className="text-3xl font-light mb-1 text-black">
-                    ${member.balance.owed.toLocaleString()}
-                  </div>
-                  <div className="text-xs font-light text-gray-500">Pending settlement</div>
-                </div>
-
-                <div className="border border-gray-200 p-6">
-                  <div className="flex items-center gap-2 mb-3 text-black">
-                    <ArrowUpRight size={16} strokeWidth={1} />
-                    <span className="text-xs font-light uppercase tracking-wider">You Owe</span>
-                  </div>
-                  <div className="text-3xl font-light mb-1 text-black">
-                    ${member.balance.owing.toLocaleString()}
-                  </div>
-                  <div className="text-xs font-light text-gray-500">Pending settlement</div>
-                </div>
-
-                <div className="border border-gray-200 p-6 bg-gray-50">
-                  <div className="flex items-center gap-2 mb-3 text-black">
-                    <DollarSign size={16} strokeWidth={1} />
-                    <span className="text-xs font-light uppercase tracking-wider">Net Position</span>
-                  </div>
-                  <div className="text-3xl font-light mb-1 text-black">
+                  <div className="text-5xl font-light mb-2 text-black">
                     ${Math.abs(member.balance.net).toLocaleString()}
                   </div>
-                  <div className="text-xs font-light text-gray-600">
-                    {member.balance.net < 0 ? 'You will pay' : 'You will receive'}
+                  <div className="text-sm font-light text-gray-600">
+                    {member.balance.net < 0 ? 'You will pay' : member.balance.net > 0 ? 'You will receive' : 'Balanced'}
                   </div>
                 </div>
               </div>
