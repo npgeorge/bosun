@@ -13,46 +13,46 @@ import { ZodError } from 'zod'
 
 export async function POST(request: Request) {
   const startTime = Date.now()
-  const supabase = await createServerSupabaseClient()
-
-  // Check if user is authenticated
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Check if user is admin
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (userError || !userData) {
-    return NextResponse.json({ error: 'Failed to verify user role' }, { status: 500 })
-  }
-
-  if (userData.role !== 'admin') {
-    return NextResponse.json({
-      error: 'Unauthorized',
-      message: 'Admin access required for settlement processing'
-    }, { status: 403 })
-  }
-
-  // Validate request body
-  const body = await request.json().catch(() => ({}))
-  const validationResult = processSettlementSchema.safeParse(body)
-
-  if (!validationResult.success) {
-    return NextResponse.json({
-      error: 'Invalid request',
-      details: validationResult.error.format()
-    }, { status: 400 })
-  }
-
-  const { simulation: isSimulation } = validationResult.data
 
   try {
+    const supabase = await createServerSupabaseClient()
+
+    // Check if user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if user is admin
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData) {
+      return NextResponse.json({ error: 'Failed to verify user role' }, { status: 500 })
+    }
+
+    if (userData.role !== 'admin') {
+      return NextResponse.json({
+        error: 'Unauthorized',
+        message: 'Admin access required for settlement processing'
+      }, { status: 403 })
+    }
+
+    // Validate request body
+    const body = await request.json().catch(() => ({}))
+    const validationResult = processSettlementSchema.safeParse(body)
+
+    if (!validationResult.success) {
+      return NextResponse.json({
+        error: 'Invalid request',
+        details: validationResult.error.format()
+      }, { status: 400 })
+    }
+
+    const { simulation: isSimulation } = validationResult.data
     // Log start of settlement process
     await logAudit({
       action: isSimulation ? 'settlement.simulation_started' : 'settlement.started',
