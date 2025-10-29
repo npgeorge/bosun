@@ -33,7 +33,10 @@ export async function POST(request: Request) {
   }
 
   if (userData.role !== 'admin') {
-    throw new AuthorizationError('Admin access required for settlement processing')
+    return NextResponse.json({
+      error: 'Unauthorized',
+      message: 'Admin access required for settlement processing'
+    }, { status: 403 })
   }
 
   // Validate request body
