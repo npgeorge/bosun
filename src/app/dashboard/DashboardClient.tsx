@@ -103,6 +103,14 @@ export default function DashboardClient({ member, transactions, documents, settl
         body: JSON.stringify({ simulation: true })
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response received:', text.substring(0, 500))
+        throw new Error('Server returned an error. Please check the console or try restarting the development server.')
+      }
+
       const data = await response.json() as SettlementResponse
       setSettlementResult(data)
 
@@ -255,6 +263,8 @@ export default function DashboardClient({ member, transactions, documents, settl
                 <div className={`mb-12 border p-6 ${
                   isSettlementError(settlementResult)
                     ? 'border-red-200 bg-red-50'
+                    : isNoTransactions(settlementResult)
+                    ? 'border-blue-200 bg-blue-50'
                     : 'border-green-200 bg-green-50'
                 }`}>
                   <h3 className="text-lg font-medium mb-4 text-black">
@@ -283,6 +293,11 @@ export default function DashboardClient({ member, transactions, documents, settl
                           </ul>
                         </div>
                       )}
+                    </div>
+                  ) : isNoTransactions(settlementResult) ? (
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">ℹ️</div>
+                      <p className="text-blue-800 font-light text-lg">{settlementResult.message}</p>
                     </div>
                   ) : isSettlementSimulation(settlementResult) ? (
                     <div className="space-y-6">
@@ -324,8 +339,6 @@ export default function DashboardClient({ member, transactions, documents, settl
                         </div>
                       )}
                     </div>
-                  ) : isNoTransactions(settlementResult) ? (
-                    <p className="text-gray-700 font-light">{settlementResult.message}</p>
                   ) : null}
                   
                   <button

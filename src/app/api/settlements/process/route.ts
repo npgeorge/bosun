@@ -75,10 +75,10 @@ export async function POST(request: Request) {
         entityType: 'settlement_cycle',
         details: { count: 0 }
       })
-      
-      return NextResponse.json({ 
-        message: 'No transactions to settle',
-        count: 0 
+
+      return NextResponse.json({
+        message: 'No settlements needed at the moment!',
+        count: 0
       })
     }
 
