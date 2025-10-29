@@ -337,43 +337,35 @@ export default function DashboardClient({ member, transactions, documents, settl
                 </div>
               )}
 
-              {/* Account Balance */}
-              <div className="mb-12">
-                <div className="border border-gray-200 p-8 bg-gray-50">
-                  <div className="flex items-center gap-2 mb-4 text-black">
-                    <DollarSign size={20} strokeWidth={1} />
-                    <span className="text-sm font-light uppercase tracking-wider">Account Balance</span>
-                  </div>
-                  <div className="text-5xl font-light mb-2 text-black">
-                    ${Math.abs(member.balance.net).toLocaleString()}
-                  </div>
-                  <div className="text-sm font-light text-gray-600">
-                    {member.balance.net < 0 ? 'You will pay' : member.balance.net > 0 ? 'You will receive' : 'Balanced'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Next Settlement */}
-              <div className="border border-gray-200 p-8 mb-12">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 text-black">
-                      <Clock size={16} strokeWidth={1} />
-                      <span className="text-xs font-light uppercase tracking-wider">Next Settlement</span>
+              {/* Account Balance and Next Settlement */}
+              <div className="flex gap-6 mb-12">
+                {/* Account Balance - 75% width */}
+                <div className="flex-[3]">
+                  <div className="border border-gray-200 p-8 bg-gray-50 h-full">
+                    <div className="flex items-center gap-2 mb-4 text-black">
+                      <DollarSign size={20} strokeWidth={1} />
+                      <span className="text-sm font-light uppercase tracking-wider">Account Balance</span>
                     </div>
-                    <div className="text-4xl font-light mb-2 text-black">{nextSettlement.time}</div>
-                    <div className="text-sm font-light text-gray-700 mb-6">{nextSettlement.date}</div>
-                    <div className="inline-block px-4 py-2 bg-gray-50 text-sm font-light text-black">
-                      {nextSettlement.hoursRemaining} hours remaining
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-light text-gray-600 mb-2">Estimated settlement</div>
-                    <div className="text-2xl font-light mb-1 text-black">
+                    <div className="text-5xl font-light mb-2 text-black">
                       ${Math.abs(member.balance.net).toLocaleString()}
                     </div>
-                    <div className="text-xs font-light text-gray-500">
-                      Fee: ${(Math.abs(member.balance.net) * 0.008).toLocaleString()} (0.8%)
+                    <div className="text-sm font-light text-gray-600">
+                      {member.balance.net < 0 ? 'You will pay' : member.balance.net > 0 ? 'You will receive' : 'Balanced'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Next Settlement - 25% width */}
+                <div className="flex-[1]">
+                  <div className="border border-gray-200 p-6 bg-white h-full">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock size={14} strokeWidth={1} className="text-gray-600" />
+                      <span className="text-xs font-light uppercase tracking-wider text-gray-600">Next Settlement</span>
+                    </div>
+                    <div className="text-2xl font-light mb-1 text-black">{nextSettlement.time}</div>
+                    <div className="text-xs font-light text-gray-500 mb-4">{nextSettlement.date}</div>
+                    <div className="inline-block px-3 py-1 bg-gray-50 text-xs font-light text-gray-600">
+                      {nextSettlement.hoursRemaining}h remaining
                     </div>
                   </div>
                 </div>
