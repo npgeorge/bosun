@@ -53,7 +53,8 @@ export default async function DashboardPage() {
     .select(`
       *,
       from_member:members!transactions_from_member_id_fkey(company_name),
-      to_member:members!transactions_to_member_id_fkey(company_name)
+      to_member:members!transactions_to_member_id_fkey(company_name),
+      transaction_documents(id)
     `)
     .or(`from_member_id.eq.${userData?.member_id},to_member_id.eq.${userData?.member_id}`)
     .order('created_at', { ascending: false })
@@ -88,6 +89,7 @@ export default async function DashboardPage() {
     reference: t.reference_number || '',
     description: t.description || '',
     createdAt: new Date(t.created_at).toISOString().split('T')[0],
+    documentCount: t.transaction_documents?.length || 0,
   })) || []
 
   // Get member's documents from storage
@@ -99,8 +101,25 @@ export default async function DashboardPage() {
       sortBy: { column: 'created_at', order: 'desc' }
     })
 
+  // Get transaction documents for this member's transactions
+  const transactionIds = formattedTransactions.map(t => t.id)
+  const { data: transactionDocuments } = await supabase
+    .from('transaction_documents')
+    .select(`
+      *,
+      transactions(
+        reference_number,
+        trade_date,
+        from_member_id,
+        to_member_id,
+        amount_usd
+      )
+    `)
+    .in('transaction_id', transactionIds)
+    .order('uploaded_at', { ascending: false })
+
   // Format documents for component
-  const documents = documentFiles?.map(file => {
+  const memberDocuments = documentFiles?.map(file => {
     const { data: { publicUrl } } = supabase.storage
       .from('member-documents')
       .getPublicUrl(`${userData?.member_id}/${file.name}`)
@@ -112,9 +131,27 @@ export default async function DashboardPage() {
       type: file.name.toLowerCase().includes('license') ? 'Trade License' :
             file.name.toLowerCase().includes('bank') ? 'Bank Statement' : 'Other',
       uploadedAt: file.created_at || new Date().toISOString(),
-      url: publicUrl
+      url: publicUrl,
+      source: 'registration' as const
     }
   }) || []
+
+  // Format transaction documents
+  const transactionDocs = transactionDocuments?.map(doc => ({
+    id: doc.id,
+    name: doc.file_name,
+    size: doc.file_size,
+    type: 'Transaction Document',
+    uploadedAt: doc.uploaded_at,
+    url: doc.storage_path,
+    source: 'transaction' as const,
+    transactionId: doc.transaction_id,
+    transactionReference: doc.transactions?.reference_number || 'N/A',
+    transactionDate: doc.transactions?.trade_date ? new Date(doc.transactions.trade_date).toISOString().split('T')[0] : 'N/A'
+  })) || []
+
+  // Combine all documents
+  const documents = [...memberDocuments, ...transactionDocs]
 
   // Get all settlements involving this member
   const { data: settlements } = await supabase

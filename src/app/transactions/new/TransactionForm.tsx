@@ -84,6 +84,41 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
   }
 
+  // Format number with commas
+  function formatNumberWithCommas(value: string): string {
+    // Remove all non-numeric characters except decimal point
+    const cleaned = value.replace(/[^\d.]/g, '')
+
+    // Split into integer and decimal parts
+    const parts = cleaned.split('.')
+
+    // Format integer part with commas
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+
+    // Limit to 2 decimal places
+    if (parts[1]) {
+      parts[1] = parts[1].substring(0, 2)
+    }
+
+    // Rejoin and return
+    return parts.join('.')
+  }
+
+  // Handle amount input change
+  function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target.value
+
+    // Remove all non-numeric characters except decimal point
+    const rawValue = input.replace(/[^\d.]/g, '')
+
+    // Prevent multiple decimal points
+    const decimalCount = (rawValue.match(/\./g) || []).length
+    if (decimalCount > 1) return
+
+    // Update form data with raw value (for submission)
+    setFormData({ ...formData, amount: rawValue })
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -252,14 +287,13 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
               <span className="absolute left-4 top-3 text-gray-500 font-light">$</span>
               <input
                 id="amount"
-                type="number"
-                step="0.01"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 required
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                value={formatNumberWithCommas(formData.amount)}
+                onChange={handleAmountChange}
                 className="w-full pl-8 pr-4 py-3 border border-gray-200 text-sm font-light focus:outline-none focus:border-black transition-colors text-black"
-                placeholder="0.00"
+                placeholder="10,000,000.00"
               />
             </div>
           </div>
