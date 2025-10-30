@@ -2,11 +2,12 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { ArrowUpRight, ArrowDownLeft, Clock, DollarSign, Plus, Settings, LogOut, Play, Search, Filter, Download, FileText, Upload, X, TrendingUp, TrendingDown, Activity, Calendar } from 'lucide-react'
+import { ArrowUpRight, ArrowDownLeft, Clock, DollarSign, Plus, Settings, LogOut, Play, Search, Filter, Download, FileText, Upload, X, TrendingUp, TrendingDown, Activity, Calendar, Paperclip } from 'lucide-react'
 import { signOut } from '@/lib/supabase/auth'
 import { useRouter } from 'next/navigation'
 import type { SettlementResponse, SettlementErrorResponse } from '@/types/api'
 import { isSettlementError, isSettlementSimulation, isNoTransactions } from '@/types/api'
+import { createClient } from '@/lib/supabase/client'
 
 interface Transaction {
   id: string
@@ -18,6 +19,7 @@ interface Transaction {
   reference: string
   description: string
   createdAt: string
+  documentCount: number
 }
 
 interface Document {
@@ -27,6 +29,10 @@ interface Document {
   type: string
   uploadedAt: string
   url: string
+  source: 'registration' | 'transaction'
+  transactionId?: string
+  transactionReference?: string
+  transactionDate?: string
 }
 
 interface Settlement {
@@ -78,6 +84,9 @@ export default function DashboardClient({ member, transactions, documents, settl
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [selectedCycle, setSelectedCycle] = useState<string | null>(null)
+  const [viewingDocuments, setViewingDocuments] = useState<string | null>(null)
+  const [transactionDocuments, setTransactionDocuments] = useState<Document[]>([])
+  const [loadingDocuments, setLoadingDocuments] = useState(false)
   const router = useRouter()
 
   const nextSettlement = {
@@ -90,6 +99,67 @@ export default function DashboardClient({ member, transactions, documents, settl
     await signOut()
     router.push('/auth/login')
     router.refresh()
+  }
+
+  async function viewTransactionDocuments(transactionId: string) {
+    setLoadingDocuments(true)
+    setViewingDocuments(transactionId)
+
+    try {
+      const supabase = createClient()
+
+      // Get all documents for this transaction
+      const { data: docs, error } = await supabase
+        .from('transaction_documents')
+        .select('*')
+        .eq('transaction_id', transactionId)
+        .order('uploaded_at', { ascending: false })
+
+      if (error) throw error
+
+      const formattedDocs: Document[] = docs?.map(doc => ({
+        id: doc.id,
+        name: doc.file_name,
+        size: doc.file_size,
+        type: doc.file_type,
+        uploadedAt: doc.uploaded_at,
+        url: doc.storage_path,
+        source: 'transaction' as const,
+        transactionId: doc.transaction_id
+      })) || []
+
+      setTransactionDocuments(formattedDocs)
+    } catch (error) {
+      console.error('Failed to load documents:', error)
+      setTransactionDocuments([])
+    } finally {
+      setLoadingDocuments(false)
+    }
+  }
+
+  async function downloadDocument(storagePath: string, fileName: string) {
+    try {
+      const supabase = createClient()
+
+      const { data, error } = await supabase.storage
+        .from('transaction-documents')
+        .download(storagePath)
+
+      if (error) throw error
+
+      // Create download link
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to download document:', error)
+      alert('Failed to download document. Please try again.')
+    }
   }
 
   async function testSettlement() {
@@ -485,8 +555,8 @@ export default function DashboardClient({ member, transactions, documents, settl
                     className="px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400 bg-white"
                   >
                     <option value="all">All Types</option>
-                    <option value="owed">They Owe You</option>
-                    <option value="owing">You Owe Them</option>
+                    <option value="owed">Receivable</option>
+                    <option value="owing">Payable</option>
                   </select>
                 </div>
 
@@ -499,30 +569,48 @@ export default function DashboardClient({ member, transactions, documents, settl
               {/* Transactions Table */}
               {filteredTransactions.length > 0 ? (
                 <div className="border border-gray-200">
-                  <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div className="grid grid-cols-7 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Type</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Amount</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Status</div>
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-center">Docs</div>
                   </div>
                   {filteredTransactions.map(tx => (
                     <div
                       key={tx.id}
-                      onClick={() => setSelectedTransaction(tx)}
-                      className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="grid grid-cols-7 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
                     >
-                      <div className="text-sm font-light text-gray-700">{tx.date}</div>
-                      <div className="text-sm font-light text-black">{tx.counterparty}</div>
-                      <div className="text-sm font-light text-gray-600">{tx.reference || '—'}</div>
-                      <div className="text-sm font-light text-gray-700">
+                      <div
+                        onClick={() => setSelectedTransaction(tx)}
+                        className="text-sm font-light text-gray-700 cursor-pointer"
+                      >{tx.date}</div>
+                      <div
+                        onClick={() => setSelectedTransaction(tx)}
+                        className="text-sm font-light text-black cursor-pointer"
+                      >{tx.counterparty}</div>
+                      <div
+                        onClick={() => setSelectedTransaction(tx)}
+                        className="text-sm font-light text-gray-600 cursor-pointer"
+                      >{tx.reference || '—'}</div>
+                      <div
+                        onClick={() => setSelectedTransaction(tx)}
+                        className="text-sm font-light text-gray-700 cursor-pointer"
+                      >
                         {tx.type === 'owed' ? 'Receivable' : 'Payable'}
                       </div>
-                      <div className={`text-sm font-light ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}>
+                      <div
+                        onClick={() => setSelectedTransaction(tx)}
+                        className={`text-sm font-light cursor-pointer ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}
+                      >
                         {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
                       </div>
-                      <div>
+                      <div
+                        onClick={() => setSelectedTransaction(tx)}
+                        className="cursor-pointer"
+                      >
                         <span className={`inline-block px-3 py-1 text-xs font-light ${
                           tx.status === 'settled' ? 'bg-gray-100 text-gray-700' :
                           tx.status === 'confirmed' ? 'bg-gray-50 text-black' :
@@ -530,6 +618,23 @@ export default function DashboardClient({ member, transactions, documents, settl
                         }`}>
                           {tx.status}
                         </span>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        {tx.documentCount > 0 ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              viewTransactionDocuments(tx.id)
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 transition-colors rounded"
+                            title={`${tx.documentCount} document${tx.documentCount !== 1 ? 's' : ''}`}
+                          >
+                            <Paperclip size={16} strokeWidth={1} className="text-gray-600" />
+                            <span className="text-xs font-light text-gray-600">{tx.documentCount}</span>
+                          </button>
+                        ) : (
+                          <span className="text-xs font-light text-gray-400">—</span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -581,7 +686,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                         <div>
                           <div className="text-xs font-light text-gray-600 mb-1">Type</div>
                           <div className="text-base font-light text-black">
-                            {selectedTransaction.type === 'owed' ? 'They Owe You' : 'You Owe Them'}
+                            {selectedTransaction.type === 'owed' ? 'Receivable' : 'Payable'}
                           </div>
                         </div>
                         <div>
@@ -624,6 +729,86 @@ export default function DashboardClient({ member, transactions, documents, settl
                   </div>
                 </div>
               )}
+
+              {/* Document Viewer Modal */}
+              {viewingDocuments && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setViewingDocuments(null)}>
+                  <div className="bg-white p-8 max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h2 className="text-2xl font-light text-black">Transaction Documents</h2>
+                        <p className="text-sm font-light text-gray-600 mt-1">
+                          {transactionDocuments.length} document{transactionDocuments.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setViewingDocuments(null)}
+                        className="p-2 hover:bg-gray-50 transition-colors"
+                      >
+                        <X size={20} strokeWidth={1} className="text-black" />
+                      </button>
+                    </div>
+
+                    {loadingDocuments ? (
+                      <div className="py-12 text-center">
+                        <p className="text-gray-600 font-light">Loading documents...</p>
+                      </div>
+                    ) : transactionDocuments.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <FileText size={48} strokeWidth={1} className="mx-auto mb-4 text-gray-300" />
+                        <p className="text-gray-600 font-light">No documents found</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {transactionDocuments.map(doc => (
+                          <div
+                            key={doc.id}
+                            className="flex items-center justify-between p-4 border border-gray-200 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FileText size={20} strokeWidth={1} className="text-gray-600 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-light text-black truncate">{doc.name}</div>
+                                <div className="text-xs font-light text-gray-500">
+                                  {formatFileSize(doc.size)} • Uploaded {formatDate(doc.uploadedAt)}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => downloadDocument(doc.url, doc.name)}
+                              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors flex-shrink-0"
+                            >
+                              <Download size={14} strokeWidth={1} />
+                              Download
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-8 flex justify-between">
+                      {transactionDocuments.length > 1 && (
+                        <button
+                          onClick={() => {
+                            transactionDocuments.forEach(doc => {
+                              downloadDocument(doc.url, doc.name)
+                            })
+                          }}
+                          className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors"
+                        >
+                          Download All
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setViewingDocuments(null)}
+                        className="px-6 py-3 bg-gray-50 text-black text-sm font-light hover:bg-gray-100 transition-colors ml-auto"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -657,59 +842,105 @@ export default function DashboardClient({ member, transactions, documents, settl
                     <div className="border border-gray-200 p-6">
                       <div className="flex items-center gap-2 mb-3 text-black">
                         <FileText size={16} strokeWidth={1} />
-                        <span className="text-xs font-light uppercase tracking-wider">Trade Licenses</span>
+                        <span className="text-xs font-light uppercase tracking-wider">Registration Docs</span>
                       </div>
                       <div className="text-3xl font-light text-black">
-                        {documents.filter(d => d.type === 'Trade License').length}
+                        {documents.filter(d => d.source === 'registration').length}
                       </div>
                     </div>
 
                     <div className="border border-gray-200 p-6">
                       <div className="flex items-center gap-2 mb-3 text-black">
-                        <FileText size={16} strokeWidth={1} />
-                        <span className="text-xs font-light uppercase tracking-wider">Bank Statements</span>
+                        <Paperclip size={16} strokeWidth={1} />
+                        <span className="text-xs font-light uppercase tracking-wider">Transaction Docs</span>
                       </div>
                       <div className="text-3xl font-light text-black">
-                        {documents.filter(d => d.type === 'Bank Statement').length}
+                        {documents.filter(d => d.source === 'transaction').length}
                       </div>
                     </div>
                   </div>
 
-                  {/* Documents Table */}
-                  <div className="border border-gray-200">
-                    <div className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Document Name</div>
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Type</div>
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Size</div>
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Upload Date</div>
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Action</div>
-                    </div>
-                    {documents.map(doc => (
-                      <div
-                        key={doc.id}
-                        className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="text-sm font-light text-black flex items-center gap-2">
-                          <FileText size={16} strokeWidth={1} className="text-gray-400" />
-                          {doc.name}
+                  {/* Registration Documents Section */}
+                  {documents.filter(d => d.source === 'registration').length > 0 && (
+                    <div className="mb-8">
+                      <h2 className="text-xl font-light mb-4 text-black">Registration Documents</h2>
+                      <div className="border border-gray-200">
+                        <div className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Document Name</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Type</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Size</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Upload Date</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Action</div>
                         </div>
-                        <div className="text-sm font-light text-gray-700">{doc.type}</div>
-                        <div className="text-sm font-light text-gray-600">{formatFileSize(doc.size)}</div>
-                        <div className="text-sm font-light text-gray-600">{formatDate(doc.uploadedAt)}</div>
-                        <div>
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors"
+                        {documents.filter(d => d.source === 'registration').map(doc => (
+                          <div
+                            key={doc.id}
+                            className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
                           >
-                            <Download size={14} strokeWidth={1} />
-                            Download
-                          </a>
-                        </div>
+                            <div className="text-sm font-light text-black flex items-center gap-2">
+                              <FileText size={16} strokeWidth={1} className="text-gray-400" />
+                              {doc.name}
+                            </div>
+                            <div className="text-sm font-light text-gray-700">{doc.type}</div>
+                            <div className="text-sm font-light text-gray-600">{formatFileSize(doc.size)}</div>
+                            <div className="text-sm font-light text-gray-600">{formatDate(doc.uploadedAt)}</div>
+                            <div>
+                              <a
+                                href={doc.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors"
+                              >
+                                <Download size={14} strokeWidth={1} />
+                                Download
+                              </a>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Transaction Documents Section */}
+                  {documents.filter(d => d.source === 'transaction').length > 0 && (
+                    <div>
+                      <h2 className="text-xl font-light mb-4 text-black">Transaction Documents</h2>
+                      <div className="border border-gray-200">
+                        <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Document Name</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Trade Date</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Size</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Upload Date</div>
+                          <div className="text-xs font-light uppercase tracking-wider text-gray-700">Action</div>
+                        </div>
+                        {documents.filter(d => d.source === 'transaction').map(doc => (
+                          <div
+                            key={doc.id}
+                            className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="text-sm font-light text-black flex items-center gap-2">
+                              <FileText size={16} strokeWidth={1} className="text-gray-400" />
+                              <span className="truncate">{doc.name}</span>
+                            </div>
+                            <div className="text-sm font-light text-gray-700">{doc.transactionReference || '—'}</div>
+                            <div className="text-sm font-light text-gray-600">{doc.transactionDate || '—'}</div>
+                            <div className="text-sm font-light text-gray-600">{formatFileSize(doc.size)}</div>
+                            <div className="text-sm font-light text-gray-600">{formatDate(doc.uploadedAt)}</div>
+                            <div>
+                              <button
+                                onClick={() => downloadDocument(doc.url, doc.name)}
+                                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors"
+                              >
+                                <Download size={14} strokeWidth={1} />
+                                Download
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="border border-gray-200 p-12 text-center">
