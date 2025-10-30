@@ -131,7 +131,7 @@ export default function SettlementsClient({
 
       <div className="max-w-7xl mx-auto px-8 py-12">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-3 gap-6 mb-12">
           {/* Total Settlements */}
           <div className="border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-3">
@@ -143,22 +143,6 @@ export default function SettlementsClient({
             <div className="text-3xl font-light text-black">{completedSettlements}</div>
             <div className="text-xs font-light text-gray-500 mt-1">
               {totalSettlements} total (including pending)
-            </div>
-          </div>
-
-          {/* Network Efficiency */}
-          <div className="border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <TrendingUp size={20} strokeWidth={1} className="text-green-600" />
-              <div className="text-xs font-light uppercase tracking-wider text-gray-600">
-                Network Efficiency
-              </div>
-            </div>
-            <div className="text-3xl font-light text-green-600">
-              {avgEfficiency.toFixed(1)}%
-            </div>
-            <div className="text-xs font-light text-gray-500 mt-1">
-              Average across {completedCycles.length} cycles
             </div>
           </div>
 
@@ -256,15 +240,6 @@ export default function SettlementsClient({
                           </div>
                           <div className={`text-xl font-light ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {netAmount >= 0 ? '+' : ''}${netAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
-                            Network Efficiency
-                          </div>
-                          <div className="text-xl font-light text-green-600">
-                            {Number(cycle!.savings_percentage || 0).toFixed(1)}%
                           </div>
                         </div>
 
@@ -372,10 +347,6 @@ export default function SettlementsClient({
               <p>
                 <strong>Settlement Timing:</strong> Settlements are processed once daily at 5:00 PM Dubai time.
                 All pending transactions are included in the next settlement cycle.
-              </p>
-              <p>
-                <strong>Network Efficiency:</strong> This metric shows how much settlement volume was reduced
-                through our network optimization. Higher percentages mean more efficient settlements and lower costs.
               </p>
               <p>
                 <strong>Transaction Fees:</strong> You are charged 0.8% on your gross transaction volume.
