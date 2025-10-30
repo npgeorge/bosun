@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Upload, X, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Member {
@@ -17,12 +17,18 @@ interface TransactionFormProps {
   members: Member[]
 }
 
+interface UploadedFile {
+  file: File
+  preview: string
+}
+
 export default function TransactionForm({ currentMemberId, members }: TransactionFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
-  
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+
+
   const [formData, setFormData] = useState({
     direction: 'owed',
     counterpartyId: '',
@@ -31,6 +37,52 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
     tradeDate: new Date().toISOString().split('T')[0],
     description: ''
   })
+
+  // Handle file selection
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const newFiles: UploadedFile[] = []
+
+    Array.from(files).forEach(file => {
+      // Validate file type
+      const validTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+        'application/msword', // DOC
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX
+        'application/vnd.ms-excel', // XLS
+        'image/jpeg',
+        'image/png'
+      ]
+
+      if (!validTypes.includes(file.type)) {
+        setError(`File type not supported: ${file.name}. Please upload PDF, DOCX, XLSX, JPG, or PNG files.`)
+        return
+      }
+
+      // Validate file size (20MB max)
+      if (file.size > 20 * 1024 * 1024) {
+        setError(`File too large: ${file.name}. Maximum size is 20MB.`)
+        return
+      }
+
+      newFiles.push({
+        file,
+        preview: file.name
+      })
+    })
+
+    setUploadedFiles([...uploadedFiles, ...newFiles])
+    // Reset input
+    e.target.value = ''
+  }
+
+  // Remove file from upload list
+  function removeFile(index: number) {
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,29 +99,63 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
       return
     }
 
-    const fromMemberId = formData.direction === 'owing' ? currentMemberId : formData.counterpartyId
-    const toMemberId = formData.direction === 'owing' ? formData.counterpartyId : currentMemberId
+    try {
+      const fromMemberId = formData.direction === 'owing' ? currentMemberId : formData.counterpartyId
+      const toMemberId = formData.direction === 'owing' ? formData.counterpartyId : currentMemberId
 
-    const { data, error: insertError } = await supabase
-      .from('transactions')
-      .insert({
-        from_member_id: fromMemberId,
-        to_member_id: toMemberId,
-        amount_usd: parseFloat(formData.amount),
-        reference_number: formData.referenceNumber || null,
-        trade_date: formData.tradeDate,
-        description: formData.description || null,
-        status: 'pending',
-        created_by: user.id
-      })
-      .select()
+      // 1. Create transaction
+      const { data: transaction, error: insertError } = await supabase
+        .from('transactions')
+        .insert({
+          from_member_id: fromMemberId,
+          to_member_id: toMemberId,
+          amount_usd: parseFloat(formData.amount),
+          reference_number: formData.referenceNumber || null,
+          trade_date: formData.tradeDate,
+          description: formData.description || null,
+          status: 'pending',
+          created_by: user.id
+        })
+        .select()
+        .single()
 
-    if (insertError) {
-      setError(insertError.message)
-      setLoading(false)
-    } else {
+      if (insertError) throw insertError
+
+      // 2. Upload documents if any
+      if (uploadedFiles.length > 0) {
+        for (const { file } of uploadedFiles) {
+          // Upload to storage
+          const fileExt = file.name.split('.').pop()
+          const fileName = `${user.id}/${transaction.id}/${Date.now()}.${fileExt}`
+
+          const { error: uploadError } = await supabase.storage
+            .from('transaction-documents')
+            .upload(fileName, file)
+
+          if (uploadError) {
+            console.error('Failed to upload file:', file.name, uploadError)
+            continue // Skip this file but continue with others
+          }
+
+          // Save document metadata
+          await supabase
+            .from('transaction_documents')
+            .insert({
+              transaction_id: transaction.id,
+              file_name: file.name,
+              file_type: file.type,
+              file_size: file.size,
+              storage_path: fileName,
+              uploaded_by: user.id
+            })
+        }
+      }
+
       router.push('/dashboard')
       router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create transaction')
+      setLoading(false)
     }
   }
 
@@ -221,6 +307,65 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
               className="w-full px-4 py-3 border border-gray-200 text-sm font-light focus:outline-none focus:border-black transition-colors resize-none text-black"
               placeholder="Additional details about this transaction..."
             />
+          </div>
+
+          {/* Document Upload */}
+          <div>
+            <label className="block text-xs font-light uppercase tracking-wider text-black mb-2">
+              Supporting Documents (Optional)
+            </label>
+            <p className="text-xs text-gray-600 font-light mb-3">
+              Upload bills of lading, invoices, contracts, or other supporting documents (PDF, DOCX, XLSX, JPG, PNG - max 20MB each)
+            </p>
+
+            {/* File Input */}
+            <label className="w-full flex flex-col items-center px-6 py-8 border-2 border-gray-200 border-dashed cursor-pointer hover:border-gray-300 transition-colors">
+              <Upload size={32} strokeWidth={1} className="text-gray-400 mb-3" />
+              <span className="text-sm font-light text-gray-600 mb-1">Click to upload documents</span>
+              <span className="text-xs font-light text-gray-500">or drag and drop</span>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </label>
+
+            {/* Uploaded Files List */}
+            {uploadedFiles.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                  {uploadedFiles.length} Document{uploadedFiles.length !== 1 ? 's' : ''} Ready to Upload
+                </div>
+                {uploadedFiles.map((fileData, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border border-gray-200 bg-gray-50"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText size={20} strokeWidth={1} className="text-gray-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-light text-black truncate">
+                          {fileData.file.name}
+                        </div>
+                        <div className="text-xs font-light text-gray-500">
+                          {(fileData.file.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="p-2 hover:bg-gray-200 transition-colors flex-shrink-0"
+                      aria-label="Remove file"
+                    >
+                      <X size={16} strokeWidth={1} className="text-gray-600" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Submit Buttons */}
