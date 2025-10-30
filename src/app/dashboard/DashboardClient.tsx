@@ -321,9 +321,9 @@ export default function DashboardClient({ member, transactions, documents, settl
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs font-light text-gray-600 mb-1">Network Efficiency</div>
-                          <div className="text-3xl font-light text-green-600">
-                            {settlementResult.preview.estimated_savings_percentage}%
+                          <div className="text-xs font-light text-gray-600 mb-1">Transaction Fees (0.8%)</div>
+                          <div className="text-3xl font-light text-black">
+                            ${Number(settlementResult.preview.total_fees).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -792,7 +792,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                 return (
                   <>
                     {/* Statistics Cards */}
-                    <div className="grid grid-cols-4 gap-6 mb-12">
+                    <div className="grid grid-cols-3 gap-6 mb-12">
                       {/* Total Settlements */}
                       <div className="border border-gray-200 p-6">
                         <div className="flex items-center gap-3 mb-3">
@@ -804,22 +804,6 @@ export default function DashboardClient({ member, transactions, documents, settl
                         <div className="text-3xl font-light text-black">{completedSettlements}</div>
                         <div className="text-xs font-light text-gray-500 mt-1">
                           {totalSettlements} total (including pending)
-                        </div>
-                      </div>
-
-                      {/* Network Efficiency */}
-                      <div className="border border-gray-200 p-6">
-                        <div className="flex items-center gap-3 mb-3">
-                          <TrendingUp size={20} strokeWidth={1} className="text-green-600" />
-                          <div className="text-xs font-light uppercase tracking-wider text-gray-600">
-                            Network Efficiency
-                          </div>
-                        </div>
-                        <div className="text-3xl font-light text-green-600">
-                          {avgEfficiency.toFixed(1)}%
-                        </div>
-                        <div className="text-xs font-light text-gray-500 mt-1">
-                          Average across {completedCycles.length} cycles
                         </div>
                       </div>
 
@@ -921,15 +905,6 @@ export default function DashboardClient({ member, transactions, documents, settl
                                     </div>
 
                                     <div className="text-right">
-                                      <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
-                                        Network Efficiency
-                                      </div>
-                                      <div className="text-xl font-light text-green-600">
-                                        {Number(cycle!.savings_percentage || 0).toFixed(1)}%
-                                      </div>
-                                    </div>
-
-                                    <div className="text-right">
                                       <span className={`inline-block px-3 py-1 text-xs font-light ${
                                         cycle!.status === 'completed' ? 'bg-green-50 text-green-700' :
                                         cycle!.status === 'processing' ? 'bg-yellow-50 text-yellow-700' :
@@ -1003,18 +978,6 @@ export default function DashboardClient({ member, transactions, documents, settl
                                           </div>
                                         </div>
                                       </div>
-
-                                      <div className="pt-4 border-t border-gray-200">
-                                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-                                          <p className="text-sm font-light text-blue-900">
-                                            <strong>Network Efficiency Explained:</strong> Through our settlement optimization,
-                                            your {cycle!.total_transactions} transactions were consolidated into just {cycleSettlements.length}
-                                            {cycleSettlements.length === 1 ? ' settlement' : ' settlements'},
-                                            reducing settlement volume by {Number(cycle!.savings_percentage).toFixed(1)}%
-                                            compared to individual wire transfers.
-                                          </p>
-                                        </div>
-                                      </div>
                                     </div>
                                   </div>
                                 )}
@@ -1033,10 +996,6 @@ export default function DashboardClient({ member, transactions, documents, settl
                           <p>
                             <strong>Settlement Timing:</strong> Settlements are processed once daily at 5:00 PM Dubai time.
                             All pending transactions are included in the next settlement cycle.
-                          </p>
-                          <p>
-                            <strong>Network Efficiency:</strong> This metric shows how much settlement volume was reduced
-                            through our network optimization. Higher percentages mean more efficient settlements and lower costs.
                           </p>
                           <p>
                             <strong>Transaction Fees:</strong> You are charged 0.8% on your gross transaction volume.
