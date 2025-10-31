@@ -76,6 +76,55 @@ export default async function AdminPage() {
     .order('timestamp', { ascending: false })
     .limit(50)
 
+  // Fetch efficiency metrics
+  // Get all completed settlement cycles for metrics
+  const { data: allSettlements } = await supabase
+    .from('settlement_cycles')
+    .select('*')
+    .eq('status', 'completed')
+
+  // Get all transactions
+  const { data: allTransactions } = await supabase
+    .from('transactions')
+    .select('amount, status, created_at')
+
+  // Calculate efficiency metrics
+  const totalGrossObligations = allSettlements?.reduce((sum, s) => sum + (s.total_volume || 0), 0) || 0
+  const totalNetSettlements = allSettlements?.reduce((sum, s) => sum + (s.net_settlements || 0), 0) || 0
+  const totalSavings = totalGrossObligations - totalNetSettlements
+  const nettingEfficiency = totalGrossObligations > 0 ? ((totalSavings / totalGrossObligations) * 100) : 0
+
+  // Fee calculations (0.8% on gross obligations)
+  const totalFeesCollected = totalGrossObligations * 0.008
+
+  // Transaction metrics
+  const totalTransactions = allTransactions?.length || 0
+  const settledTransactions = allTransactions?.filter(t => t.status === 'settled').length || 0
+  const pendingTransactions = allTransactions?.filter(t => t.status === 'pending').length || 0
+
+  // Member metrics
+  const totalMembers = members?.length || 0
+  const avgVolumePerMember = totalMembers > 0 ? (totalGrossObligations / totalMembers) : 0
+
+  // Settlement metrics
+  const totalSettlementCycles = allSettlements?.length || 0
+  const avgTransactionsPerCycle = totalSettlementCycles > 0 ? (settledTransactions / totalSettlementCycles) : 0
+
+  const efficiencyMetrics = {
+    totalGrossObligations,
+    totalNetSettlements,
+    totalSavings,
+    nettingEfficiency,
+    totalFeesCollected,
+    totalTransactions,
+    settledTransactions,
+    pendingTransactions,
+    totalMembers,
+    avgVolumePerMember,
+    totalSettlementCycles,
+    avgTransactionsPerCycle
+  }
+
   return (
     <AdminClient
       applications={applications || []}
@@ -83,6 +132,7 @@ export default async function AdminPage() {
       recentSettlements={recentSettlements || []}
       auditLogs={auditLogs || []}
       userEmail={user.email || ''}
+      efficiencyMetrics={efficiencyMetrics}
     />
   )
 }
