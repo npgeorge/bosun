@@ -8,7 +8,7 @@ I'll update the progress document with all completed items from today's session:
 **Project Start Date**: October 2025
 **Target MVP Launch (Revenue)**: Week 4 (on track)
 **Target Full Platform**: Week 8
-**Last Updated**: October 30, 2025
+**Last Updated**: October 31, 2025
 
 **Business Model**: Bitcoin settlement rails (80%+ cost savings) with hidden multilateral netting for margin optimization  
 **Pricing Strategy**: Pure transaction fee model, NO monthly platform fees. Simple: 0.8% (Year 1), 0.6% (Year 2), 0.4% (Year 3+). Hidden volume discounts implemented from start.  
@@ -343,6 +343,7 @@ I'll update the progress document with all completed items from today's session:
 - ⬜ Multi-Currency Support
 - ⬜ Twice-Daily Settlements
 - ✅ Member Dashboard Enhancements (Transactions & Documents sections complete - Oct 26-28)
+- ✅ Transaction Document Management (Document attachments, viewer modal, organized Documents tab - Oct 31)
 
 ### Week 7: Operations & Support ⬜
 - ⬜ Automated Billing
@@ -453,6 +454,70 @@ I'll update the progress document with all completed items from today's session:
     - File upload working
     - Document download working
     - 10MB file size limit
+
+### October 31, 2025 - Document Management & UI Refinements:
+
+1. ✅ **Transaction Type Nomenclature Update**
+   - Changed "They Owe You" → "Receivable" (clearer professional terminology)
+   - Changed "You Owe Them" → "Payable" (standard accounting language)
+   - Updated transaction details modal
+   - Updated filter dropdown in Transactions section
+   - Improved clarity for non-technical users
+
+2. ✅ **Transaction Document Attachments**
+   - Added "Docs" column to transactions table
+   - Shows paperclip icon (📎) with document count
+   - Icon only appears when documents exist
+   - Clickable to open document viewer modal
+   - Shows "—" when no attachments
+   - Provides quick visual indication of documentation status
+
+3. ✅ **Document Viewer Modal**
+   - Opens when clicking attachment icon in transactions table
+   - Displays all documents associated with transaction
+   - Shows file name, size, and upload date for each document
+   - Individual download button for each file
+   - "Download All" button when multiple documents exist
+   - Professional modal design matching Bosun aesthetic
+   - Proper error handling for missing documents
+
+4. ✅ **Enhanced Documents Tab Organization**
+   - Split into two distinct sections:
+     * **Registration Documents**: Trade licenses, bank statements (company-level)
+     * **Transaction Documents**: Bills of lading, invoices, receipts (transaction-level)
+   - Transaction documents include contextual metadata:
+     * Associated transaction reference number
+     * Trade date
+     * File name and size
+     * Upload date
+     * Download action
+   - Updated statistics cards:
+     * Total Documents count
+     * Registration Documents count
+     * Transaction Documents count
+   - Separate tables for each document type
+   - Better organization for large document volumes
+
+5. ✅ **Backend Document Handling**
+   - Query `transaction_documents` table to get document counts per transaction
+   - Added `documentCount` field to transaction objects
+   - Fetch full transaction document details with metadata
+   - Combine registration and transaction documents in Documents tab
+   - Efficient queries to minimize database calls
+   - Proper joins for transaction metadata display
+
+**Key Files Modified:**
+- `src/app/dashboard/page.tsx` - Added document queries and counts
+- `src/app/dashboard/DashboardClient.tsx` - Added UI for document viewing/downloading
+
+**Business Impact:**
+- ✅ Professional terminology improves user experience
+- ✅ Document visibility in transactions table saves time
+- ✅ Quick access to supporting documentation for each transaction
+- ✅ Better organization supports audit and compliance needs
+- ✅ Reduces clicks needed to access transaction documents
+
+---
 
 ### October 30, 2025 - Testing Framework & Production-Ready Improvements:
 
@@ -1315,21 +1380,29 @@ bosun-platform/
 
 ---
 
-*This progress document reflects all work completed through October 30, 2025. Track all metrics religiously - data drives decisions. Update after each major milestone or weekly during critical development phases.*
+*This progress document reflects all work completed through October 31, 2025. Track all metrics religiously - data drives decisions. Update after each major milestone or weekly during critical development phases.*
 
-**Current Status**: Week 3 complete (95%), Week 4 in progress (98% complete - testing framework added!)
+**Current Status**: Week 3 complete (95%), Week 4 in progress (99% complete - document management added!)
 
-**Overall Health**: 🟢 EXCELLENT - Technical platform 98% complete.
+**Overall Health**: 🟢 EXCELLENT - Technical platform 99% complete.
 - ✅ **262 comprehensive tests** with 95.97% coverage
 - ✅ **Production-ready settlement algorithm** (integer cents, metadata, traceability)
 - ✅ **Settlement API** fully debugged and working perfectly
 - ✅ **Security infrastructure** built (RLS policies ready to deploy)
 - ✅ **Email notifications** working with beautiful templates
 - ✅ **Monitoring active** (Sentry + Slack)
-- ✅ **Dashboard fully functional** with improved UX
+- ✅ **Dashboard fully functional** with improved UX and document management
+- ✅ **Transaction document attachments** with viewer modal
 - ⏸️ **Ready for production deployment** (just needs Vercel + domain setup)
 
-**Most Recent Key Achievements (Oct 30)**:
+**Most Recent Key Achievements (Oct 31)**:
+- ✅ **Transaction type nomenclature** (Receivable/Payable instead of They Owe/You Owe)
+- ✅ **Document attachments in transactions table** (paperclip icon with count)
+- ✅ **Document viewer modal** (view and download transaction documents)
+- ✅ **Enhanced Documents tab** (separated registration vs transaction documents)
+- ✅ **Backend document handling** (efficient queries with metadata)
+
+**Previous Key Achievements (Oct 30)**:
 - ✅ **Comprehensive testing framework** (262 tests, 95.97% coverage)
 - ✅ **Netting algorithm enhancements** (integer cents arithmetic, settlement metadata)
 - ✅ **Fee model change** (per-transaction charging for increased margins)
