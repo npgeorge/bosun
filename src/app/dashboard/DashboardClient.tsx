@@ -569,7 +569,7 @@ export default function DashboardClient({ member, transactions, documents, settl
               {/* Transactions Table */}
               {filteredTransactions.length > 0 ? (
                 <div className="border border-gray-200">
-                  <div className="grid grid-cols-7 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50" style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
@@ -581,7 +581,8 @@ export default function DashboardClient({ member, transactions, documents, settl
                   {filteredTransactions.map(tx => (
                     <div
                       key={tx.id}
-                      className="grid grid-cols-7 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                      className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                      style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}
                     >
                       <div
                         onClick={() => setSelectedTransaction(tx)}
