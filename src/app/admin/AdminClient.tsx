@@ -14,7 +14,8 @@ import {
   Download,
   RefreshCw,
   Play,
-  Clock
+  Clock,
+  TrendingUp
 } from 'lucide-react'
 import { signOut } from '@/lib/supabase/auth'
 import { createClient } from '@/lib/supabase/client'
@@ -88,18 +89,35 @@ interface AuditLog {
   }
 }
 
+interface EfficiencyMetrics {
+  totalGrossObligations: number
+  totalNetSettlements: number
+  totalSavings: number
+  nettingEfficiency: number
+  totalFeesCollected: number
+  totalTransactions: number
+  settledTransactions: number
+  pendingTransactions: number
+  totalMembers: number
+  avgVolumePerMember: number
+  totalSettlementCycles: number
+  avgTransactionsPerCycle: number
+}
+
 export default function AdminClient({
   applications,
   members,
   recentSettlements,
   auditLogs,
-  userEmail
+  userEmail,
+  efficiencyMetrics
 }: {
   applications: Application[]
   members: Member[]
   recentSettlements: Settlement[]
   auditLogs: AuditLog[]
   userEmail: string
+  efficiencyMetrics: EfficiencyMetrics
 }) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('applications')
@@ -296,6 +314,16 @@ export default function AdminClient({
             >
               <Activity size={18} strokeWidth={1} />
               Audit Log
+            </button>
+
+            <button
+              onClick={() => setActiveTab('efficiency')}
+              className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black flex items-center gap-3 ${
+                activeTab === 'efficiency' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              }`}
+            >
+              <TrendingUp size={18} strokeWidth={1} />
+              Netting Efficiency
             </button>
 
             <div className="pt-4 border-t border-gray-200 mt-4">
@@ -649,6 +677,251 @@ export default function AdminClient({
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Netting Efficiency Tab */}
+          {activeTab === 'efficiency' && (
+            <div className="max-w-6xl">
+              <h1 className="text-4xl font-light mb-8 text-black">Netting Efficiency Metrics</h1>
+
+              {/* Core Efficiency Metrics */}
+              <div className="mb-8">
+                <h2 className="text-xl font-light mb-4 text-black">Core Efficiency</h2>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Netting Efficiency
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.nettingEfficiency.toFixed(2)}%
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Overall savings rate
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Total Gross Obligations
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      ${efficiencyMetrics.totalGrossObligations.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      All transaction volume
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Total Net Settlements
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      ${efficiencyMetrics.totalNetSettlements.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Actual settlements required
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Total Savings
+                    </div>
+                    <div className="text-3xl font-light text-green-600 mb-1">
+                      ${efficiencyMetrics.totalSavings.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Eliminated obligations
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Revenue Metrics */}
+              <div className="mb-8">
+                <h2 className="text-xl font-light mb-4 text-black">Revenue Metrics</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Total Fees Collected
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      ${efficiencyMetrics.totalFeesCollected.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      0.8% on gross obligations
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Platform Value Created
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      ${efficiencyMetrics.totalSavings.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Member savings from netting
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Value Multiple
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.totalFeesCollected > 0
+                        ? (efficiencyMetrics.totalSavings / efficiencyMetrics.totalFeesCollected).toFixed(1)
+                        : '0'}x
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Savings vs fees charged
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transaction Metrics */}
+              <div className="mb-8">
+                <h2 className="text-xl font-light mb-4 text-black">Transaction Metrics</h2>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Total Transactions
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.totalTransactions.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      All time
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Settled Transactions
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.settledTransactions.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Completed settlements
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Pending Transactions
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.pendingTransactions.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Awaiting settlement
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Avg per Cycle
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.avgTransactionsPerCycle.toFixed(1)}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Transactions per settlement
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Member & Settlement Metrics */}
+              <div className="mb-8">
+                <h2 className="text-xl font-light mb-4 text-black">Member & Settlement Activity</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Total Members
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.totalMembers}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Active on platform
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Avg Volume per Member
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      ${efficiencyMetrics.avgVolumePerMember.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      All-time average
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 p-6">
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                      Settlement Cycles
+                    </div>
+                    <div className="text-3xl font-light text-black mb-1">
+                      {efficiencyMetrics.totalSettlementCycles}
+                    </div>
+                    <div className="text-xs font-light text-gray-600">
+                      Completed cycles
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Insights */}
+              <div className="border border-gray-200 p-6 bg-gray-50">
+                <h2 className="text-xl font-light mb-4 text-black">Key Insights</h2>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <TrendingUp size={20} strokeWidth={1} className="text-black mt-1" />
+                    <div>
+                      <div className="text-sm font-medium text-black mb-1">
+                        Platform is delivering {efficiencyMetrics.totalFeesCollected > 0
+                          ? (efficiencyMetrics.totalSavings / efficiencyMetrics.totalFeesCollected).toFixed(1)
+                          : '0'}x value to members
+                      </div>
+                      <div className="text-sm font-light text-gray-600">
+                        Members save ${efficiencyMetrics.totalSavings.toLocaleString()} while paying ${efficiencyMetrics.totalFeesCollected.toLocaleString(undefined, { maximumFractionDigits: 0 })} in fees
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <TrendingUp size={20} strokeWidth={1} className="text-black mt-1" />
+                    <div>
+                      <div className="text-sm font-medium text-black mb-1">
+                        Netting eliminates {efficiencyMetrics.nettingEfficiency.toFixed(1)}% of gross obligations
+                      </div>
+                      <div className="text-sm font-light text-gray-600">
+                        ${efficiencyMetrics.totalGrossObligations.toLocaleString()} reduced to ${efficiencyMetrics.totalNetSettlements.toLocaleString()} in actual settlements
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <TrendingUp size={20} strokeWidth={1} className="text-black mt-1" />
+                    <div>
+                      <div className="text-sm font-medium text-black mb-1">
+                        Average member processes ${efficiencyMetrics.avgVolumePerMember.toLocaleString(undefined, { maximumFractionDigits: 0 })} in volume
+                      </div>
+                      <div className="text-sm font-light text-gray-600">
+                        Across {efficiencyMetrics.totalMembers} members with {efficiencyMetrics.totalSettlementCycles} settlement cycles
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </main>
