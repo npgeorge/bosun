@@ -1,0 +1,19 @@
+# PRODUCTION ENVIRONMENT VARIABLES FOR VERCEL
+# Copy and paste these into Vercel when deploying
+# =================================================
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://verfzowwggogyhkenmki.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlcmZ6b3d3Z2dvZ3loa2VubWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NjEzODEsImV4cCI6MjA3NjEzNzM4MX0.bzPobTDTC8soE0PNf-dcBFdgdAaI3BcCsbHOfLeB3zc
+
+# Application URL
+NEXT_PUBLIC_APP_URL=https://bosun.global
+
+# Email Configuration (Resend)
+RESEND_API_KEY=re_Fyh7NEK1_E9TzLCTYm2fiyzM5azo1pbVQ
+EMAIL_FROM="Bosun <onboarding@resend.dev>"
+EMAIL_REPLY_TO=onboarding@resend.dev
+
+# Optional: Add these later if you want
+# NEXT_PUBLIC_SENTRY_DSN=
+# SLACK_WEBHOOK_URL=
