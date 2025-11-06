@@ -1013,7 +1013,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                 const cycles = Object.keys(settlementsByCycle)
                   .map(cycleId => {
                     const cycleSettlements = settlementsByCycle[cycleId]
-                    const cycle = cycleSettlements[0]?.settlement_cycles
+                    const cycle = cycleSettlements[0]?.settlement_cycles?.[0]
                     return { cycleId, settlements: cycleSettlements, cycle }
                   })
                   .filter(c => c.cycle)
