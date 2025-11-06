@@ -6,8 +6,8 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Email configuration
 const EMAIL_CONFIG = {
-  from: process.env.EMAIL_FROM || 'Bosun <notifications@bosun.ae>',
-  replyTo: process.env.EMAIL_REPLY_TO || 'support@bosun.ae',
+  from: process.env.EMAIL_FROM || 'Bosun <notifications@bosun.global>',
+  replyTo: process.env.EMAIL_REPLY_TO || 'support@bosun.global',
 }
 
 export interface EmailOptions {
@@ -163,12 +163,12 @@ export async function sendSettlementCompleteEmail(params: {
           `}
 
           <center>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://bosun.ae'}/settlements" class="button">View Settlement Details</a>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://bosun.global'}/settlements" class="button">View Settlement Details</a>
           </center>
         </div>
 
         <div class="footer">
-          <p>Questions? Contact us at <a href="mailto:support@bosun.ae">support@bosun.ae</a></p>
+          <p>Questions? Contact us at <a href="mailto:support@bosun.global">support@bosun.global</a></p>
           <p style="margin-top: 20px; font-size: 11px; color: #999;">
             Bosun Settlement Platform<br>
             Powered by Bitcoin Settlement Rails
@@ -270,7 +270,7 @@ export async function sendApplicationApprovedEmail(params: {
 
           <p style="margin-top: 30px; font-size: 14px; color: #666;">
             <strong>Need Help Getting Started?</strong><br>
-            Our team is here to assist you. Contact us at <a href="mailto:support@bosun.ae" style="color: #10b981;">support@bosun.ae</a>
+            Our team is here to assist you. Contact us at <a href="mailto:support@bosun.global" style="color: #10b981;">support@bosun.global</a>
           </p>
         </div>
 
@@ -333,13 +333,13 @@ export async function sendApplicationRejectedEmail(params: {
 
           ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
 
-          <p>If you believe this decision was made in error or if you have additional information to provide, please contact our support team at <a href="mailto:support@bosun.ae" style="color: #667eea;">support@bosun.ae</a></p>
+          <p>If you believe this decision was made in error or if you have additional information to provide, please contact our support team at <a href="mailto:support@bosun.global" style="color: #667eea;">support@bosun.global</a></p>
 
           <p>We appreciate your interest in Bosun.</p>
         </div>
 
         <div class="footer">
-          <p>Questions? Contact us at <a href="mailto:support@bosun.ae">support@bosun.ae</a></p>
+          <p>Questions? Contact us at <a href="mailto:support@bosun.global">support@bosun.global</a></p>
         </div>
       </div>
     </body>
@@ -435,7 +435,7 @@ export async function sendTransactionConfirmationEmail(params: {
         </div>
 
         <div class="footer">
-          <p>Questions? Contact us at <a href="mailto:support@bosun.ae">support@bosun.ae</a></p>
+          <p>Questions? Contact us at <a href="mailto:support@bosun.global">support@bosun.global</a></p>
         </div>
       </div>
     </body>

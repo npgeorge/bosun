@@ -44,7 +44,7 @@ For development/testing, Resend provides a test domain that works immediately.
 
 1. In Resend dashboard, go to **Domains**
 2. Click **Add Domain**
-3. Enter your domain: `bosun.ae`
+3. Enter your domain: `bosun.global`
 4. Add DNS records to your domain registrar:
    - **SPF Record** (TXT): Authorizes Resend to send emails
    - **DKIM Record** (TXT): Cryptographic signature for email authenticity
@@ -64,7 +64,7 @@ Value: [Resend will provide this]
 
 Type: TXT
 Host: _dmarc
-Value: v=DMARC1; p=none; rua=mailto:dmarc@bosun.ae
+Value: v=DMARC1; p=none; rua=mailto:dmarc@bosun.global
 ```
 
 ### Step 4: Configure Environment Variables (2 minutes)
@@ -74,8 +74,8 @@ Add these to your `.env.local` file:
 ```bash
 # Email Configuration (Resend)
 RESEND_API_KEY=re_your_api_key_here
-EMAIL_FROM="Bosun <notifications@bosun.ae>"
-EMAIL_REPLY_TO=support@bosun.ae
+EMAIL_FROM="Bosun <notifications@bosun.global>"
+EMAIL_REPLY_TO=support@bosun.global
 ```
 
 **For development**, you can use Resend's test domain:
@@ -85,7 +85,7 @@ EMAIL_FROM="Bosun <onboarding@resend.dev>"
 
 **For production**, use your verified domain:
 ```bash
-EMAIL_FROM="Bosun <notifications@bosun.ae>"
+EMAIL_FROM="Bosun <notifications@bosun.global>"
 ```
 
 ### Step 5: Test Email Service (5 minutes)
