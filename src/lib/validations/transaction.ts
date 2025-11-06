@@ -5,9 +5,7 @@ import { z } from 'zod'
  * Transaction creation validation schema
  */
 export const createTransactionSchema = z.object({
-  direction: z.enum(['owed', 'owing'], {
-    required_error: 'Transaction direction is required',
-  }),
+  direction: z.enum(['owed', 'owing']),
   counterpartyId: z.string().uuid('Invalid counterparty ID'),
   amount: z
     .number()
