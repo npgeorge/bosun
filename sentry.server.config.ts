@@ -36,9 +36,6 @@ Sentry.init({
     return event
   },
 
-  // Performance monitoring
-  integrations: [
-    // HTTP instrumentation
-    new Sentry.Integrations.Http({ tracing: true }),
-  ],
+  // Note: HTTP instrumentation is automatically included in modern Sentry SDK
+  // No need to manually add integrations
 })
