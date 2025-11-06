@@ -60,21 +60,25 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
 
   // Calculate balances
+  const owed = transactions?.reduce((sum, t) =>
+    t.to_member_id === userData?.member_id && t.status !== 'settled'
+      ? sum + Number(t.amount_usd)
+      : sum,
+    0
+  ) || 0
+
+  const owing = transactions?.reduce((sum, t) =>
+    t.from_member_id === userData?.member_id && t.status !== 'settled'
+      ? sum + Number(t.amount_usd)
+      : sum,
+    0
+  ) || 0
+
   const balance = {
-    owed: transactions?.reduce((sum, t) => 
-      t.to_member_id === userData?.member_id && t.status !== 'settled' 
-        ? sum + Number(t.amount_usd) 
-        : sum, 
-      0
-    ) || 0,
-    owing: transactions?.reduce((sum, t) => 
-      t.from_member_id === userData?.member_id && t.status !== 'settled'
-        ? sum + Number(t.amount_usd) 
-        : sum, 
-      0
-    ) || 0,
+    owed,
+    owing,
+    net: owed - owing
   }
-  balance.net = balance.owed - balance.owing
 
   // Format transactions for component
   const formattedTransactions = transactions?.map(t => ({
