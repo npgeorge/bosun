@@ -68,14 +68,14 @@ export default function SettlementsClient({
 
   // Calculate average network efficiency from completed settlement cycles
   const completedCycles = settlements
-    .filter(s => s.settlement_cycles?.status === 'completed')
-    .map(s => s.settlement_cycles!)
+    .filter(s => s.settlement_cycles?.[0]?.status === 'completed')
+    .map(s => s.settlement_cycles![0])
     .filter((cycle, index, self) =>
-      index === self.findIndex(c => c.id === cycle.id)
+      cycle && index === self.findIndex(c => c?.id === cycle.id)
     )
 
   const avgEfficiency = completedCycles.length > 0
-    ? completedCycles.reduce((sum, c) => sum + Number(c.savings_percentage || 0), 0) / completedCycles.length
+    ? completedCycles.reduce((sum, c) => sum + Number(c?.savings_percentage || 0), 0) / completedCycles.length
     : 0
 
   // Calculate total savings (assuming 2.5% wire fee vs 0.8% platform fee)
@@ -100,7 +100,7 @@ export default function SettlementsClient({
   const cycles = Object.keys(settlementsByCycle)
     .map(cycleId => {
       const cycleSettlements = settlementsByCycle[cycleId]
-      const cycle = cycleSettlements[0]?.settlement_cycles
+      const cycle = cycleSettlements[0]?.settlement_cycles?.[0]
       return { cycleId, settlements: cycleSettlements, cycle }
     })
     .filter(c => c.cycle)
