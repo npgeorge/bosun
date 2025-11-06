@@ -10,6 +10,7 @@ export interface SettlementPreview {
   transactions_to_process: number
   settlements_generated: number
   total_volume: number
+  total_fees: number
   estimated_savings_percentage: string
   unique_members: number
   max_single_settlement: number
