@@ -20,7 +20,7 @@ interface Settlement {
   fee_usd: number
   status: string
   created_at: string
-  settlement_cycles?: {
+  settlement_cycles?: Array<{
     id: string
     cycle_time: string
     total_transactions: number
@@ -29,7 +29,7 @@ interface Settlement {
     savings_percentage: number
     status: string
     completed_at: string
-  }
+  }>
 }
 
 interface SettlementsClientProps {
