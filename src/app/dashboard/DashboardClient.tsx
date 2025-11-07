@@ -88,6 +88,20 @@ export default function DashboardClient({ member, transactions, documents, settl
   const [transactionDocuments, setTransactionDocuments] = useState<Document[]>([])
   const [loadingDocuments, setLoadingDocuments] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Outstanding Tasks state
+  const [bankingInfo, setBankingInfo] = useState({
+    bankName: '',
+    bankAccountNumber: '',
+    bankSwiftCode: ''
+  })
+  const [tradeLicense, setTradeLicense] = useState<File | null>(null)
+  const [bankStatement, setBankStatement] = useState<File | null>(null)
+  const [savingBanking, setSavingBanking] = useState(false)
+  const [uploadingDocs, setUploadingDocs] = useState(false)
+  const [taskError, setTaskError] = useState('')
+  const [taskSuccess, setTaskSuccess] = useState('')
+
   const router = useRouter()
 
   const nextSettlement = {
@@ -200,6 +214,98 @@ export default function DashboardClient({ member, transactions, documents, settl
     }
   }
 
+  async function saveBankingInfo() {
+    setSavingBanking(true)
+    setTaskError('')
+    setTaskSuccess('')
+
+    try {
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from('member_applications')
+        .update({
+          bank_name: bankingInfo.bankName,
+          bank_account_number: bankingInfo.bankAccountNumber,
+          bank_swift_code: bankingInfo.bankSwiftCode,
+        })
+        .eq('member_id', memberId)
+
+      if (error) throw error
+
+      setTaskSuccess('Banking information saved successfully!')
+      setTimeout(() => setTaskSuccess(''), 3000)
+    } catch (error) {
+      console.error('Failed to save banking info:', error)
+      setTaskError('Failed to save banking information. Please try again.')
+    } finally {
+      setSavingBanking(false)
+    }
+  }
+
+  async function uploadDocuments() {
+    setUploadingDocs(true)
+    setTaskError('')
+    setTaskSuccess('')
+
+    try {
+      if (!tradeLicense || !bankStatement) {
+        throw new Error('Please select both documents to upload')
+      }
+
+      const supabase = createClient()
+
+      // Upload trade license
+      const licenseExt = tradeLicense.name.split('.').pop()
+      const licensePath = `${memberId}/trade-license.${licenseExt}`
+
+      const { error: licenseError } = await supabase.storage
+        .from('member-documents')
+        .upload(licensePath, tradeLicense, {
+          upsert: true
+        })
+
+      if (licenseError) throw licenseError
+
+      // Upload bank statement
+      const statementExt = bankStatement.name.split('.').pop()
+      const statementPath = `${memberId}/bank-statement.${statementExt}`
+
+      const { error: statementError } = await supabase.storage
+        .from('member-documents')
+        .upload(statementPath, bankStatement, {
+          upsert: true
+        })
+
+      if (statementError) throw statementError
+
+      // Update member application with document paths
+      const { error: updateError } = await supabase
+        .from('member_applications')
+        .update({
+          trade_license_path: licensePath,
+          bank_statement_path: statementPath,
+          status: 'pending' // Update status from incomplete to pending
+        })
+        .eq('member_id', memberId)
+
+      if (updateError) throw updateError
+
+      setTaskSuccess('Documents uploaded successfully!')
+      setTradeLicense(null)
+      setBankStatement(null)
+      setTimeout(() => {
+        setTaskSuccess('')
+        router.refresh()
+      }, 2000)
+    } catch (error) {
+      console.error('Failed to upload documents:', error)
+      setTaskError(error instanceof Error ? error.message : 'Failed to upload documents. Please try again.')
+    } finally {
+      setUploadingDocs(false)
+    }
+  }
+
   // Filter and search transactions
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
@@ -292,6 +398,14 @@ export default function DashboardClient({ member, transactions, documents, settl
               }`}
             >
               Overview
+            </button>
+            <button
+              onClick={() => { setActiveTab('tasks'); setMobileMenuOpen(false); }}
+              className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
+                activeTab === 'tasks' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              }`}
+            >
+              Outstanding Tasks
             </button>
             <button
               onClick={() => { setActiveTab('transactions'); setMobileMenuOpen(false); }}
@@ -523,6 +637,201 @@ export default function DashboardClient({ member, transactions, documents, settl
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'tasks' && (
+            <div className="max-w-4xl">
+              {/* Page Header */}
+              <div className="mb-8 md:mb-12">
+                <h1 className="text-3xl md:text-4xl font-light text-black mb-4">Outstanding Tasks</h1>
+                <p className="text-gray-600 font-light">
+                  Complete these tasks to activate your account and start trading.
+                </p>
+              </div>
+
+              {/* Status Messages */}
+              {taskError && (
+                <div className="mb-6 border border-red-200 bg-red-50 p-4 text-sm font-light text-red-600">
+                  {taskError}
+                </div>
+              )}
+              {taskSuccess && (
+                <div className="mb-6 border border-green-200 bg-green-50 p-4 text-sm font-light text-green-600">
+                  {taskSuccess}
+                </div>
+              )}
+
+              {/* Banking Information */}
+              <div className="border border-gray-200 mb-8">
+                <div className="p-6 border-b border-gray-200 bg-gray-50">
+                  <h2 className="text-xl font-light text-black">Banking Information</h2>
+                  <p className="text-sm font-light text-gray-600 mt-2">
+                    Provide your bank account details for settlements
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                        Bank Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={bankingInfo.bankName}
+                        onChange={(e) => setBankingInfo({ ...bankingInfo, bankName: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-black transition-colors"
+                        placeholder="Enter your bank name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                        Account Number *
+                      </label>
+                      <input
+                        type="text"
+                        value={bankingInfo.bankAccountNumber}
+                        onChange={(e) => setBankingInfo({ ...bankingInfo, bankAccountNumber: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-black transition-colors"
+                        placeholder="Enter your account number"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                        SWIFT/BIC Code *
+                      </label>
+                      <input
+                        type="text"
+                        value={bankingInfo.bankSwiftCode}
+                        onChange={(e) => setBankingInfo({ ...bankingInfo, bankSwiftCode: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-black transition-colors"
+                        placeholder="e.g., ABCDUAEXXXX"
+                      />
+                    </div>
+
+                    <button
+                      onClick={saveBankingInfo}
+                      disabled={savingBanking || !bankingInfo.bankName || !bankingInfo.bankAccountNumber || !bankingInfo.bankSwiftCode}
+                      className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {savingBanking ? 'Saving...' : 'Save Banking Information'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Required Documents */}
+              <div className="border border-gray-200">
+                <div className="p-6 border-b border-gray-200 bg-gray-50">
+                  <h2 className="text-xl font-light text-black">Required Documents</h2>
+                  <p className="text-sm font-light text-gray-600 mt-2">
+                    Upload your trade license and bank statement for verification
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-6">
+                    {/* Trade License */}
+                    <div>
+                      <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                        Trade License *
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center hover:border-gray-400 transition-colors">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              const file = e.target.files[0]
+                              if (file.size > 10 * 1024 * 1024) {
+                                setTaskError('File size must be less than 10MB')
+                                return
+                              }
+                              setTradeLicense(file)
+                            }
+                          }}
+                          className="hidden"
+                          id="trade-license"
+                        />
+                        <label htmlFor="trade-license" className="cursor-pointer">
+                          {tradeLicense ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="text-sm text-green-600">✓ {tradeLicense.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => setTradeLicense(null)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div>
+                              <Upload className="mx-auto mb-2 text-gray-400" size={32} strokeWidth={1} />
+                              <p className="text-sm font-light text-gray-600">Click to upload trade license</p>
+                              <p className="text-xs font-light text-gray-500 mt-1">PDF, JPG, or PNG (max 10MB)</p>
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Bank Statement */}
+                    <div>
+                      <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                        Bank Statement (Last 3 months) *
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center hover:border-gray-400 transition-colors">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              const file = e.target.files[0]
+                              if (file.size > 10 * 1024 * 1024) {
+                                setTaskError('File size must be less than 10MB')
+                                return
+                              }
+                              setBankStatement(file)
+                            }
+                          }}
+                          className="hidden"
+                          id="bank-statement"
+                        />
+                        <label htmlFor="bank-statement" className="cursor-pointer">
+                          {bankStatement ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="text-sm text-green-600">✓ {bankStatement.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => setBankStatement(null)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div>
+                              <Upload className="mx-auto mb-2 text-gray-400" size={32} strokeWidth={1} />
+                              <p className="text-sm font-light text-gray-600">Click to upload bank statement</p>
+                              <p className="text-xs font-light text-gray-500 mt-1">PDF, JPG, or PNG (max 10MB)</p>
+                            </div>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={uploadDocuments}
+                      disabled={uploadingDocs || !tradeLicense || !bankStatement}
+                      className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {uploadingDocs ? 'Uploading...' : 'Upload Documents'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

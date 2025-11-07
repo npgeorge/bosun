@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { signUp } from '@/lib/supabase/auth'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { Upload, X } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -21,33 +20,13 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    
+
     // Company info
     companyName: '',
     registrationNumber: '',
-    bankName: '',
-    bankAccountNumber: '',
-    bankSwiftCode: '',
-    
-    // Contact info
     companyAddress: '',
     companyPhone: '',
   })
-
-  // File uploads
-  const [tradeLicense, setTradeLicense] = useState<File | null>(null)
-  const [bankStatement, setBankStatement] = useState<File | null>(null)
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'license' | 'statement') => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        setError('File size must be less than 10MB')
-        return
-      }
-      type === 'license' ? setTradeLicense(file) : setBankStatement(file)
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -62,10 +41,6 @@ export default function RegisterPage() {
 
       if (formData.password.length < 8) {
         throw new Error('Password must be at least 8 characters')
-      }
-
-      if (!tradeLicense || !bankStatement) {
-        throw new Error('Please upload both trade license and bank statement')
       }
 
       console.log('🚀 Starting registration for:', formData.email)
@@ -90,50 +65,8 @@ export default function RegisterPage() {
       const userId = authData.user.id
       const supabase = createClient()
 
-      // 3. Upload documents
-      console.log('📝 Step 2: Uploading documents...')
-      let licensePath = ''
-      let statementPath = ''
-
-      try {
-        // Upload trade license
-        const licenseExt = tradeLicense.name.split('.').pop()
-        licensePath = `${userId}/trade-license.${licenseExt}`
-        
-        const { error: licenseError } = await supabase.storage
-          .from('member-documents')
-          .upload(licensePath, tradeLicense, {
-            upsert: true
-          })
-
-        if (licenseError) {
-          console.warn('⚠️ License upload warning:', licenseError)
-        } else {
-          console.log('✅ Trade license uploaded:', licensePath)
-        }
-
-        // Upload bank statement
-        const statementExt = bankStatement.name.split('.').pop()
-        statementPath = `${userId}/bank-statement.${statementExt}`
-        
-        const { error: statementError } = await supabase.storage
-          .from('member-documents')
-          .upload(statementPath, bankStatement, {
-            upsert: true
-          })
-
-        if (statementError) {
-          console.warn('⚠️ Statement upload warning:', statementError)
-        } else {
-          console.log('✅ Bank statement uploaded:', statementPath)
-        }
-      } catch (uploadErr: any) {
-        console.warn('⚠️ Upload error (non-critical):', uploadErr.message)
-        // Don't fail registration if uploads fail
-      }
-
-      // 4. Create member record
-      console.log('📝 Step 3: Creating member record...')
+      // 3. Create member record
+      console.log('📝 Step 2: Creating member record...')
       const memberInsertData = {
         company_name: formData.companyName,
         registration_number: formData.registrationNumber,
@@ -141,7 +74,7 @@ export default function RegisterPage() {
         kyc_status: 'pending',
         collateral_amount: 0,
       }
-      
+
       console.log('Inserting member data:', memberInsertData)
 
       const { data: memberData, error: memberError } = await supabase
@@ -162,8 +95,8 @@ export default function RegisterPage() {
 
       console.log('✅ Member created:', memberData)
 
-      // 5. Link user to member
-      console.log('📝 Step 4: Linking user to member...')
+      // 4. Link user to member
+      console.log('📝 Step 3: Linking user to member...')
       const { error: userUpdateError } = await supabase
         .from('users')
         .update({ member_id: memberData.id })
@@ -176,21 +109,16 @@ export default function RegisterPage() {
         console.log('✅ User linked to member')
       }
 
-      // 6. Create member application
-      console.log('📝 Step 5: Creating member application...')
+      // 5. Create member application (basic info only)
+      console.log('📝 Step 4: Creating member application...')
       const { error: appError } = await supabase
         .from('member_applications')
         .insert({
           member_id: memberData.id,
           user_id: userId,
-          bank_name: formData.bankName,
-          bank_account_number: formData.bankAccountNumber,
-          bank_swift_code: formData.bankSwiftCode,
           company_address: formData.companyAddress,
           company_phone: formData.companyPhone,
-          trade_license_path: licensePath,
-          bank_statement_path: statementPath,
-          status: 'pending',
+          status: 'incomplete',  // Mark as incomplete since banking info and docs are pending
         })
 
       if (appError) {
@@ -215,25 +143,25 @@ export default function RegisterPage() {
       <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <div className="w-full max-w-md">
           <div className="text-center">
-            <h2 className="text-2xl md:text-3xl font-light mb-4 text-black">Application Submitted!</h2>
+            <h2 className="text-2xl md:text-3xl font-light mb-4 text-black">Account Created!</h2>
             <div className="mb-6 p-6 bg-green-50 border border-green-200 rounded">
               <p className="text-green-800 font-light mb-4">
-                Thank you for applying to join Bosun. Your application is under review.
+                Welcome to Bosun! Your account has been created successfully.
               </p>
               <p className="text-sm text-green-700 font-light">
-                We've sent a confirmation email to <strong>{formData.email}</strong>. 
-                Please verify your email address to complete your registration.
+                We've sent a confirmation email to <strong>{formData.email}</strong>.
+                Please verify your email address to access your dashboard.
               </p>
             </div>
             <p className="text-sm text-gray-600 font-light mb-6">
-              Our team will review your application within 24 hours. You'll receive an email 
-              once your account is approved.
+              You can now sign in to your dashboard. Complete your banking information and upload
+              required documents in the Outstanding Tasks section to activate your account.
             </p>
-            <Link 
+            <Link
               href="/auth/login"
               className="inline-block px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors"
             >
-              Back to Login
+              Sign In
             </Link>
           </div>
         </div>
@@ -246,7 +174,7 @@ export default function RegisterPage() {
       <div className="max-w-2xl mx-auto px-4 md:px-6">
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-3xl md:text-4xl font-light tracking-wider mb-2 text-black">BOSUN</h1>
-          <p className="text-xs md:text-sm font-light text-gray-600">Company Registration</p>
+          <p className="text-xs md:text-sm font-light text-gray-600">Create Your Account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
@@ -377,136 +305,12 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Banking Information */}
-          <div className="border-b border-gray-200 pb-8">
-            <h2 className="text-xl font-light mb-6 text-black">Banking Information</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
-                  Bank Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.bankName}
-                  onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-black transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
-                  Account Number *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.bankAccountNumber}
-                  onChange={(e) => setFormData({ ...formData, bankAccountNumber: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-black transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
-                  SWIFT/BIC Code *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.bankSwiftCode}
-                  onChange={(e) => setFormData({ ...formData, bankSwiftCode: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-black transition-colors"
-                  placeholder="e.g., ABCDUAEXXXX"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Document Uploads */}
-          <div className="border-b border-gray-200 pb-8">
-            <h2 className="text-xl font-light mb-6 text-black">Required Documents</h2>
-            <div className="space-y-4">
-              {/* Trade License */}
-              <div>
-                <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
-                  Trade License *
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center hover:border-gray-400 transition-colors">
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => handleFileChange(e, 'license')}
-                    className="hidden"
-                    id="trade-license"
-                  />
-                  <label htmlFor="trade-license" className="cursor-pointer">
-                    {tradeLicense ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-sm text-green-600">✓ {tradeLicense.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => setTradeLicense(null)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <Upload className="mx-auto mb-2 text-gray-400" size={32} strokeWidth={1} />
-                        <p className="text-sm font-light text-gray-600">Click to upload trade license</p>
-                        <p className="text-xs font-light text-gray-500 mt-1">PDF, JPG, or PNG (max 10MB)</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              </div>
-
-              {/* Bank Statement */}
-              <div>
-                <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
-                  Bank Statement (Last 3 months) *
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center hover:border-gray-400 transition-colors">
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => handleFileChange(e, 'statement')}
-                    className="hidden"
-                    id="bank-statement"
-                  />
-                  <label htmlFor="bank-statement" className="cursor-pointer">
-                    {bankStatement ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-sm text-green-600">✓ {bankStatement.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => setBankStatement(null)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <Upload className="mx-auto mb-2 text-gray-400" size={32} strokeWidth={1} />
-                        <p className="text-sm font-light text-gray-600">Click to upload bank statement</p>
-                        <p className="text-xs font-light text-gray-500 mt-1">PDF, JPG, or PNG (max 10MB)</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Terms */}
           <div className="bg-gray-50 p-6 border border-gray-200">
             <p className="text-xs font-light text-gray-600 leading-relaxed">
-              By submitting this application, you agree to Bosun's Terms of Service and Privacy Policy. 
-              Your application will be reviewed within 24 hours. All information provided must be accurate 
-              and verifiable. False information may result in immediate rejection and potential legal action.
+              By creating an account, you agree to Bosun's Terms of Service and Privacy Policy.
+              You'll need to complete your banking information and upload required documents from
+              your dashboard to activate full account access.
             </p>
           </div>
 
@@ -523,7 +327,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="flex-1 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Submitting...' : 'Submit Application'}
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </div>
         </form>
