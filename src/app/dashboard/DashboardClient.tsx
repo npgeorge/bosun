@@ -267,7 +267,7 @@ export default function DashboardClient({ member, transactions, documents, settl
               onClick={handleLogout}
               className="p-2 hover:bg-gray-50 transition-colors"
             >
-              <LogOut size={18} md:size={20} strokeWidth={1} className="text-black" />
+              <LogOut size={20} strokeWidth={1} className="text-black" />
             </button>
           </div>
         </div>
