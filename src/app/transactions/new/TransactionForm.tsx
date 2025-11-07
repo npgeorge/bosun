@@ -198,21 +198,21 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-200">
-        <div className="px-8 py-6 flex items-center gap-4">
-          <button 
+        <div className="px-4 md:px-8 py-4 md:py-6 flex items-center gap-3 md:gap-4">
+          <button
             onClick={() => router.back()}
             className="p-2 hover:bg-gray-50 transition-colors"
           >
             <ArrowLeft size={20} strokeWidth={1} className="text-black" />
           </button>
-          <div className="text-2xl font-light tracking-wider text-black">BOSUN</div>
+          <div className="text-xl md:text-2xl font-light tracking-wider text-black">BOSUN</div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto p-8">
-        <h1 className="text-4xl font-light mb-8 text-black">New Transaction</h1>
+      <main className="max-w-2xl mx-auto p-4 md:p-8">
+        <h1 className="text-3xl md:text-4xl font-light mb-6 md:mb-8 text-black">New Transaction</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
           {error && (
             <div className="border border-red-200 bg-red-50 p-4 text-sm font-light text-red-600">
               {error}
@@ -224,11 +224,11 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
             <label className="block text-xs font-light uppercase tracking-wider text-black mb-3">
               Transaction Type
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, direction: 'owed' })}
-                className={`p-4 border text-sm font-light transition-colors ${
+                className={`p-4 md:p-4 border text-sm font-light transition-colors ${
                   formData.direction === 'owed'
                     ? 'border-black bg-gray-50 text-black'
                     : 'border-gray-200 text-gray-700 hover:border-gray-300'
@@ -240,7 +240,7 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, direction: 'owing' })}
-                className={`p-4 border text-sm font-light transition-colors ${
+                className={`p-4 md:p-4 border text-sm font-light transition-colors ${
                   formData.direction === 'owing'
                     ? 'border-black bg-gray-50 text-black'
                     : 'border-gray-200 text-gray-700 hover:border-gray-300'
@@ -403,18 +403,18 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 md:gap-4 pt-4">
             <button
               type="button"
               onClick={() => router.back()}
-              className="flex-1 py-3 border border-gray-200 text-black text-sm font-light hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 md:py-3 border border-gray-200 text-black text-sm font-light hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || members.length === 0}
-              className="flex-1 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="flex-1 py-3 md:py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
               {loading ? 'Creating...' : 'Create Transaction'}
             </button>
