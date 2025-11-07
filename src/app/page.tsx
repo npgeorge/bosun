@@ -185,32 +185,33 @@ export default function BosunLanding() {
 
       {/* Navigation */}
       <nav className="border-b border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <ShipWheelLogo size={32} className="text-black" />
-            <div className="text-2xl font-light tracking-wider">BOSUN</div>
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 flex justify-between items-center">
+          <div className="flex items-center gap-2 md:gap-3">
+            <ShipWheelLogo size={24} md:size={32} className="text-black" />
+            <div className="text-xl md:text-2xl font-light tracking-wider">BOSUN</div>
           </div>
-          <div className="flex gap-8 items-center">
-            <a href="#benefits" className="text-sm font-light hover:text-gray-600 transition-colors">Benefits</a>
-            <a href="#how" className="text-sm font-light hover:text-gray-600 transition-colors">How It Works</a>
-            <button 
+          <div className="flex gap-3 md:gap-8 items-center">
+            <a href="#benefits" className="text-xs md:text-sm font-light hover:text-gray-600 transition-colors hidden sm:inline">Benefits</a>
+            <a href="#how" className="text-xs md:text-sm font-light hover:text-gray-600 transition-colors hidden sm:inline">How It Works</a>
+            <button
               onClick={() => openAuth('signin')}
-              className="text-sm font-light hover:text-gray-600 transition-colors"
+              className="text-xs md:text-sm font-light hover:text-gray-600 transition-colors"
             >
               Sign In
             </button>
-            <button 
+            <button
               onClick={() => router.push('/auth/register')}
-              className="px-6 py-2 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors"
+              className="px-4 md:px-6 py-2 bg-black text-white text-xs md:text-sm font-light hover:bg-gray-800 transition-colors"
             >
-              Request Access
+              <span className="hidden sm:inline">Request Access</span>
+              <span className="sm:hidden">Join</span>
             </button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section with Background Image */}
-      <section className="relative min-h-[600px] flex items-center overflow-hidden">
+      <section className="relative min-h-[400px] md:min-h-[600px] flex items-center overflow-hidden">
         {/* Background Image Layer */}
         <div
           className="absolute inset-0 z-0"
@@ -227,24 +228,24 @@ export default function BosunLanding() {
         <div className="absolute inset-0 bg-black opacity-40 z-1" />
 
         {/* Content */}
-        <div className="relative max-w-7xl mx-auto px-6 py-32 w-full z-10">
+        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32 w-full z-10">
           <div className="max-w-3xl">
-            <h1 className="text-7xl font-light leading-tight mb-8 tracking-tight text-white">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-light leading-tight mb-6 md:mb-8 tracking-tight text-white">
               Maritime settlement,<br />reimagined
             </h1>
-            <p className="text-xl font-light text-gray-200 mb-12 leading-relaxed">
+            <p className="text-base md:text-xl font-light text-gray-200 mb-8 md:mb-12 leading-relaxed">
               Reduce transaction costs by 85%. Settle in minutes, not days.
               Purpose-built for the maritime industry.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
               <button
                 onClick={() => router.push('/auth/register')}
-                className="px-8 py-4 bg-white text-black text-sm font-light hover:bg-gray-100 transition-colors flex items-center gap-2"
+                className="px-6 md:px-8 py-3 md:py-4 bg-white text-black text-sm font-light hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
               >
                 Get Started
                 <ArrowRight size={16} />
               </button>
-              <button className="px-8 py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors">
+              <button className="px-6 md:px-8 py-3 md:py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors">
                 View Demo
               </button>
             </div>
@@ -254,28 +255,28 @@ export default function BosunLanding() {
 
       {/* Stats Section */}
       <section className="border-t border-b border-gray-200 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <div className="grid grid-cols-3 gap-12">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 text-center md:text-left">
             <div>
-              <div className="text-5xl font-light mb-3">85%</div>
-              <div className="text-sm font-light text-gray-600">Cost reduction vs traditional settlement</div>
+              <div className="text-4xl md:text-5xl font-light mb-2 md:mb-3">85%</div>
+              <div className="text-xs md:text-sm font-light text-gray-600">Cost reduction vs traditional settlement</div>
             </div>
             <div>
-              <div className="text-5xl font-light mb-3">20min</div>
-              <div className="text-sm font-light text-gray-600">Average settlement time</div>
+              <div className="text-4xl md:text-5xl font-light mb-2 md:mb-3">20min</div>
+              <div className="text-xs md:text-sm font-light text-gray-600">Average settlement time</div>
             </div>
             <div>
-              <div className="text-5xl font-light mb-3">$655B</div>
-              <div className="text-sm font-light text-gray-600">Global maritime trade volume</div>
+              <div className="text-4xl md:text-5xl font-light mb-2 md:mb-3">$655B</div>
+              <div className="text-xs md:text-sm font-light text-gray-600">Global maritime trade volume</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits" className="max-w-7xl mx-auto px-6 py-32">
-        <h2 className="text-5xl font-light mb-20 text-center">Built for efficiency</h2>
-        <div className="grid grid-cols-3 gap-16">
+      <section id="benefits" className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32">
+        <h2 className="text-3xl md:text-5xl font-light mb-12 md:mb-20 text-center">Built for efficiency</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16">
           <div>
             <div className="w-12 h-12 mb-6 flex items-center justify-center">
               <TrendingDown size={32} strokeWidth={1} />
@@ -311,8 +312,8 @@ export default function BosunLanding() {
 
       {/* How It Works Section */}
       <section id="how" className="border-t border-gray-200 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 py-32">
-          <h2 className="text-5xl font-light mb-20 text-center">Seamless integration</h2>
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32">
+          <h2 className="text-3xl md:text-5xl font-light mb-12 md:mb-20 text-center">Seamless integration</h2>
           <div className="max-w-3xl mx-auto space-y-16">
             <div className="flex gap-8">
               <div className="text-4xl font-light text-gray-300">01</div>
@@ -349,13 +350,13 @@ export default function BosunLanding() {
       </section>
 
       {/* Testimonial Section */}
-      <section className="max-w-7xl mx-auto px-6 py-32">
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32">
         <div className="max-w-4xl mx-auto text-center">
-          <blockquote className="text-3xl font-light leading-relaxed mb-8">
-            "Bosun transformed our settlement operations. What used to take days 
+          <blockquote className="text-xl md:text-3xl font-light leading-relaxed mb-6 md:mb-8">
+            "Bosun transformed our settlement operations. What used to take days
             and cost us millions now happens in minutes at a fraction of the cost."
           </blockquote>
-          <div className="text-sm font-light text-gray-600">
+          <div className="text-xs md:text-sm font-light text-gray-600">
             — CFO, Leading Maritime Trading Company
           </div>
         </div>
@@ -363,12 +364,12 @@ export default function BosunLanding() {
 
       {/* CTA Section */}
       <section className="border-t border-gray-200 bg-black text-white">
-        <div className="max-w-7xl mx-auto px-6 py-32 text-center">
-          <h2 className="text-5xl font-light mb-8">Ready to optimize your settlements?</h2>
-          <p className="text-xl font-light mb-12 text-gray-300">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32 text-center">
+          <h2 className="text-3xl md:text-5xl font-light mb-6 md:mb-8">Ready to optimize your settlements?</h2>
+          <p className="text-base md:text-xl font-light mb-8 md:mb-12 text-gray-300">
             Join the maritime companies already saving millions with Bosun.
           </p>
-          <div className="flex gap-4 justify-center max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center max-w-md mx-auto">
             <input
               type="email"
               placeholder="Your email address"
@@ -391,8 +392,8 @@ export default function BosunLanding() {
 
       {/* Footer */}
       <footer className="border-t border-gray-800 bg-black text-white">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-4 gap-12">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <ShipWheelLogo size={24} className="text-white" />
