@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import type { SettlementResponse, SettlementErrorResponse } from '@/types/api'
 import { isSettlementError, isSettlementSimulation, isNoTransactions } from '@/types/api'
 import { createClient } from '@/lib/supabase/client'
+import ShipWheelLogo from '@/components/ShipWheelLogo'
 
 interface Transaction {
   id: string
@@ -353,6 +354,7 @@ export default function DashboardClient({ member, transactions, documents, settl
             >
               <Menu size={20} strokeWidth={1} className="text-black" />
             </button>
+            <ShipWheelLogo size={28} className="text-black" />
             <div className="text-xl md:text-2xl font-light tracking-wider text-black">BOSUN</div>
           </div>
           <div className="flex items-center gap-2 md:gap-6">
