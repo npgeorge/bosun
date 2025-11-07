@@ -30,11 +30,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-wider mb-2 text-black">BOSUN</h1>
-          <p className="text-sm font-light text-gray-600">Maritime Settlement Platform</p>
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl font-light tracking-wider mb-2 text-black">BOSUN</h1>
+          <p className="text-xs md:text-sm font-light text-gray-600">Maritime Settlement Platform</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
