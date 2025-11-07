@@ -212,10 +212,10 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <div className="w-full max-w-md">
           <div className="text-center">
-            <h2 className="text-3xl font-light mb-4 text-black">Application Submitted!</h2>
+            <h2 className="text-2xl md:text-3xl font-light mb-4 text-black">Application Submitted!</h2>
             <div className="mb-6 p-6 bg-green-50 border border-green-200 rounded">
               <p className="text-green-800 font-light mb-4">
                 Thank you for applying to join Bosun. Your application is under review.
@@ -242,14 +242,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-12">
-      <div className="max-w-2xl mx-auto px-6">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-wider mb-2 text-black">BOSUN</h1>
-          <p className="text-sm font-light text-gray-600">Company Registration</p>
+    <div className="min-h-screen bg-white py-8 md:py-12">
+      <div className="max-w-2xl mx-auto px-4 md:px-6">
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl font-light tracking-wider mb-2 text-black">BOSUN</h1>
+          <p className="text-xs md:text-sm font-light text-gray-600">Company Registration</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
           {error && (
             <div className="border border-red-200 bg-red-50 p-4 text-sm font-light text-red-600">
               {error}
@@ -286,7 +286,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
                     Password *
@@ -511,7 +511,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Submit */}
-          <div className="flex gap-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 md:gap-4">
             <Link
               href="/auth/login"
               className="flex-1 py-3 text-center border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors"
