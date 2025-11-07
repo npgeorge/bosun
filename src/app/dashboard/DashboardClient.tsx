@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { ArrowUpRight, ArrowDownLeft, Clock, DollarSign, Plus, Settings, LogOut, Play, Search, Filter, Download, FileText, Upload, X, TrendingUp, TrendingDown, Activity, Calendar, Paperclip } from 'lucide-react'
+import { ArrowUpRight, ArrowDownLeft, Clock, DollarSign, Plus, Settings, LogOut, Play, Search, Filter, Download, FileText, Upload, X, TrendingUp, TrendingDown, Activity, Calendar, Paperclip, Menu } from 'lucide-react'
 import { signOut } from '@/lib/supabase/auth'
 import { useRouter } from 'next/navigation'
 import type { SettlementResponse, SettlementErrorResponse } from '@/types/api'
@@ -87,6 +87,7 @@ export default function DashboardClient({ member, transactions, documents, settl
   const [viewingDocuments, setViewingDocuments] = useState<string | null>(null)
   const [transactionDocuments, setTransactionDocuments] = useState<Document[]>([])
   const [loadingDocuments, setLoadingDocuments] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
 
   const nextSettlement = {
@@ -237,37 +238,55 @@ export default function DashboardClient({ member, transactions, documents, settl
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-200">
-        <div className="px-8 py-6 flex justify-between items-center">
-        <div className="text-2xl font-light tracking-wider text-black">BOSUN</div>
-        <div className="flex items-center gap-6">
-        <span className="text-sm font-light text-black">{member.companyName}</span>
-        {isAdmin && (
-          <button 
-            onClick={() => router.push('/admin')}
-            className="px-4 py-2 bg-gray-100 text-black text-sm font-light hover:bg-gray-200 transition-colors"
-          >
-          Admin Panel
-          </button>
-          )}
-          <button className="p-2 hover:bg-gray-50 transition-colors">
-          <Settings size={20} strokeWidth={1} className="text-black" />
-        </button>
-        <button 
-        onClick={handleLogout}
-        className="p-2 hover:bg-gray-50 transition-colors"
-        >
-        <LogOut size={20} strokeWidth={1} className="text-black" />
-        </button>
-        </div>
+        <div className="px-4 md:px-8 py-4 md:py-6 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-gray-50 transition-colors"
+            >
+              <Menu size={20} strokeWidth={1} className="text-black" />
+            </button>
+            <div className="text-xl md:text-2xl font-light tracking-wider text-black">BOSUN</div>
+          </div>
+          <div className="flex items-center gap-2 md:gap-6">
+            <span className="text-xs md:text-sm font-light text-black hidden sm:inline">{member.companyName}</span>
+            {isAdmin && (
+              <button
+                onClick={() => router.push('/admin')}
+                className="px-3 md:px-4 py-2 bg-gray-100 text-black text-xs md:text-sm font-light hover:bg-gray-200 transition-colors"
+              >
+                <span className="hidden sm:inline">Admin Panel</span>
+                <span className="sm:hidden">Admin</span>
+              </button>
+            )}
+            <button className="p-2 hover:bg-gray-50 transition-colors hidden sm:block">
+              <Settings size={20} strokeWidth={1} className="text-black" />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 hover:bg-gray-50 transition-colors"
+            >
+              <LogOut size={18} md:size={20} strokeWidth={1} className="text-black" />
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex relative">
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
         {/* Sidebar Navigation */}
-        <nav className="w-64 border-r border-gray-200 min-h-screen p-8">
+        <nav className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative z-40 w-64 border-r border-gray-200 min-h-screen p-8 bg-white transition-transform duration-300 ease-in-out`}>
           <div className="space-y-2">
             <button
-              onClick={() => setActiveTab('overview')}
+              onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }}
               className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
                 activeTab === 'overview' ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
@@ -275,7 +294,7 @@ export default function DashboardClient({ member, transactions, documents, settl
               Overview
             </button>
             <button
-              onClick={() => setActiveTab('transactions')}
+              onClick={() => { setActiveTab('transactions'); setMobileMenuOpen(false); }}
               className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
                 activeTab === 'transactions' ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
@@ -283,7 +302,7 @@ export default function DashboardClient({ member, transactions, documents, settl
               Transactions
             </button>
             <button
-              onClick={() => setActiveTab('settlements')}
+              onClick={() => { setActiveTab('settlements'); setMobileMenuOpen(false); }}
               className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
                 activeTab === 'settlements' ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
@@ -291,7 +310,7 @@ export default function DashboardClient({ member, transactions, documents, settl
               Settlements
             </button>
             <button
-              onClick={() => setActiveTab('documents')}
+              onClick={() => { setActiveTab('documents'); setMobileMenuOpen(false); }}
               className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
                 activeTab === 'documents' ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
@@ -302,25 +321,26 @@ export default function DashboardClient({ member, transactions, documents, settl
         </nav>
 
         {/* Main Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 md:p-8">
           {activeTab === 'overview' && (
             <div className="max-w-6xl">
               {/* Page Header */}
-              <div className="flex justify-between items-center mb-12">
-                <h1 className="text-4xl font-light text-black">Overview</h1>
-                <div className="flex gap-4">
-                  <button 
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 md:mb-12 gap-4">
+                <h1 className="text-3xl md:text-4xl font-light text-black">Overview</h1>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <button
                     onClick={testSettlement}
                     disabled={testingSettlement}
-                    className="px-6 py-3 border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    className="px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-black text-xs md:text-sm font-light hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Play size={16} />
-                    {testingSettlement ? 'Testing...' : 'Test Settlement'}
+                    <span className="hidden sm:inline">{testingSettlement ? 'Testing...' : 'Test Settlement'}</span>
+                    <span className="sm:hidden">{testingSettlement ? 'Test...' : 'Test'}</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={() => router.push('/transactions/new')}
-                    className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors flex items-center gap-2"
+                    className="px-4 md:px-6 py-2 md:py-3 bg-black text-white text-xs md:text-sm font-light hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                   >
                     <Plus size={16} />
                     New Transaction
@@ -421,15 +441,15 @@ export default function DashboardClient({ member, transactions, documents, settl
               )}
 
               {/* Account Balance and Next Settlement */}
-              <div className="flex gap-6 mb-12">
-                {/* Account Balance - 75% width */}
-                <div className="flex-[3]">
-                  <div className="border border-gray-200 p-8 bg-gray-50 h-full">
+              <div className="flex flex-col lg:flex-row gap-4 md:gap-6 mb-8 md:mb-12">
+                {/* Account Balance */}
+                <div className="flex-1 lg:flex-[3]">
+                  <div className="border border-gray-200 p-6 md:p-8 bg-gray-50 h-full">
                     <div className="flex items-center gap-2 mb-4 text-black">
                       <DollarSign size={20} strokeWidth={1} />
-                      <span className="text-sm font-light uppercase tracking-wider">Account Balance</span>
+                      <span className="text-xs md:text-sm font-light uppercase tracking-wider">Account Balance</span>
                     </div>
-                    <div className="text-5xl font-light mb-2 text-black">
+                    <div className="text-4xl md:text-5xl font-light mb-2 text-black">
                       ${Math.abs(member.balance.net).toLocaleString()}
                     </div>
                     <div className="text-sm font-light text-gray-600">
@@ -438,8 +458,8 @@ export default function DashboardClient({ member, transactions, documents, settl
                   </div>
                 </div>
 
-                {/* Next Settlement - 25% width */}
-                <div className="flex-[1]">
+                {/* Next Settlement */}
+                <div className="flex-1 lg:flex-[1]">
                   <div className="border border-gray-200 p-6 bg-white h-full">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock size={14} strokeWidth={1} className="text-gray-600" />
@@ -457,24 +477,24 @@ export default function DashboardClient({ member, transactions, documents, settl
               {/* Recent Transactions */}
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-light text-black">Recent Transactions</h2>
+                  <h2 className="text-xl md:text-2xl font-light text-black">Recent Transactions</h2>
                   <button
                     onClick={() => setActiveTab('transactions')}
-                    className="text-sm font-light text-gray-700 hover:text-black transition-colors"
+                    className="text-xs md:text-sm font-light text-gray-700 hover:text-black transition-colors"
                   >
                     View all
                   </button>
                 </div>
                 {transactions.slice(0, 4).length > 0 ? (
-                  <div className="border border-gray-200">
-                    <div className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div className="border border-gray-200 overflow-x-auto">
+                    <div className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[640px]">
                       <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
                       <div className="text-xs font-light uppercase tracking-wider text-gray-700">Amount</div>
                       <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
                       <div className="text-xs font-light uppercase tracking-wider text-gray-700">Status</div>
                     </div>
                     {transactions.slice(0, 4).map(tx => (
-                      <div key={tx.id} className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors">
+                      <div key={tx.id} className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[640px]">
                         <div className="text-sm font-light text-black">{tx.counterparty}</div>
                         <div className={`text-sm font-light ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}>
                           {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
@@ -510,11 +530,11 @@ export default function DashboardClient({ member, transactions, documents, settl
           {activeTab === 'transactions' && (
             <div className="max-w-6xl">
               {/* Page Header */}
-              <div className="flex justify-between items-center mb-12">
-                <h1 className="text-4xl font-light text-black">Transactions</h1>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 md:mb-12 gap-4">
+                <h1 className="text-3xl md:text-4xl font-light text-black">Transactions</h1>
                 <button
                   onClick={() => router.push('/transactions/new')}
-                  className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors flex items-center gap-2"
+                  className="px-4 md:px-6 py-2 md:py-3 bg-black text-white text-xs md:text-sm font-light hover:bg-gray-800 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                 >
                   <Plus size={16} />
                   New Transaction
@@ -523,7 +543,7 @@ export default function DashboardClient({ member, transactions, documents, settl
 
               {/* Search and Filters */}
               <div className="mb-8 space-y-4">
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                   {/* Search */}
                   <div className="flex-1 relative">
                     <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" strokeWidth={1} />
@@ -532,7 +552,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                       placeholder="Search by counterparty, reference, or description..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400"
+                      className="w-full pl-12 pr-4 py-2 md:py-3 border border-gray-200 text-xs md:text-sm font-light text-black focus:outline-none focus:border-gray-400"
                     />
                   </div>
 
@@ -540,7 +560,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400 bg-white"
+                    className="px-4 py-2 md:py-3 border border-gray-200 text-xs md:text-sm font-light text-black focus:outline-none focus:border-gray-400 bg-white"
                   >
                     <option value="all">All Statuses</option>
                     <option value="pending">Pending</option>
@@ -552,7 +572,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400 bg-white"
+                    className="px-4 py-2 md:py-3 border border-gray-200 text-xs md:text-sm font-light text-black focus:outline-none focus:border-gray-400 bg-white"
                   >
                     <option value="all">All Types</option>
                     <option value="owed">Receivable</option>
@@ -568,8 +588,8 @@ export default function DashboardClient({ member, transactions, documents, settl
 
               {/* Transactions Table */}
               {filteredTransactions.length > 0 ? (
-                <div className="border border-gray-200">
-                  <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50" style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}>
+                <div className="border border-gray-200 overflow-x-auto">
+                  <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[900px]" style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
                     <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
@@ -581,7 +601,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                   {filteredTransactions.map(tx => (
                     <div
                       key={tx.id}
-                      className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                      className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[900px]"
                       style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}
                     >
                       <div
@@ -823,15 +843,15 @@ export default function DashboardClient({ member, transactions, documents, settl
           {activeTab === 'documents' && (
             <div className="max-w-6xl">
               {/* Page Header */}
-              <div className="flex justify-between items-center mb-12">
-                <h1 className="text-4xl font-light text-black">Documents</h1>
+              <div className="mb-8 md:mb-12">
+                <h1 className="text-3xl md:text-4xl font-light text-black">Documents</h1>
               </div>
 
               {/* Documents Grid */}
               {documents.length > 0 ? (
                 <div className="space-y-6">
                   {/* Statistics */}
-                  <div className="grid grid-cols-3 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
                     <div className="border border-gray-200 p-6">
                       <div className="flex items-center gap-2 mb-3 text-black">
                         <FileText size={16} strokeWidth={1} />
@@ -865,8 +885,8 @@ export default function DashboardClient({ member, transactions, documents, settl
                   {documents.filter(d => d.source === 'registration').length > 0 && (
                     <div className="mb-8">
                       <h2 className="text-xl font-light mb-4 text-black">Registration Documents</h2>
-                      <div className="border border-gray-200">
-                        <div className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                      <div className="border border-gray-200 overflow-x-auto">
+                        <div className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[800px]">
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Document Name</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Type</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Size</div>
@@ -876,7 +896,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                         {documents.filter(d => d.source === 'registration').map(doc => (
                           <div
                             key={doc.id}
-                            className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                            className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[800px]"
                           >
                             <div className="text-sm font-light text-black flex items-center gap-2">
                               <FileText size={16} strokeWidth={1} className="text-gray-400" />
@@ -906,8 +926,8 @@ export default function DashboardClient({ member, transactions, documents, settl
                   {documents.filter(d => d.source === 'transaction').length > 0 && (
                     <div>
                       <h2 className="text-xl font-light mb-4 text-black">Transaction Documents</h2>
-                      <div className="border border-gray-200">
-                        <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                      <div className="border border-gray-200 overflow-x-auto">
+                        <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[900px]">
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Document Name</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Trade Date</div>
@@ -918,7 +938,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                         {documents.filter(d => d.source === 'transaction').map(doc => (
                           <div
                             key={doc.id}
-                            className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                            className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[900px]"
                           >
                             <div className="text-sm font-light text-black flex items-center gap-2">
                               <FileText size={16} strokeWidth={1} className="text-gray-400" />
@@ -958,8 +978,8 @@ export default function DashboardClient({ member, transactions, documents, settl
           {activeTab === 'settlements' && (
             <div className="max-w-7xl">
               {/* Page Header */}
-              <div className="flex justify-between items-center mb-12">
-                <h1 className="text-4xl font-light text-black">Settlements</h1>
+              <div className="mb-8 md:mb-12">
+                <h1 className="text-3xl md:text-4xl font-light text-black">Settlements</h1>
               </div>
 
               {(() => {
@@ -1024,7 +1044,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                 return (
                   <>
                     {/* Statistics Cards */}
-                    <div className="grid grid-cols-3 gap-6 mb-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
                       {/* Total Settlements */}
                       <div className="border border-gray-200 p-6">
                         <div className="flex items-center gap-3 mb-3">
