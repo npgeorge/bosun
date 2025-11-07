@@ -37,7 +37,7 @@ setInterval(() => {
 
 export function rateLimit(req: NextRequest): NextResponse | null {
   // Get client identifier (IP address + user agent)
-  const clientIp = req.ip || req.headers.get('x-forwarded-for') || 'unknown'
+  const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
   const userAgent = req.headers.get('user-agent') || 'unknown'
   const identifier = `${clientIp}-${userAgent}`
 
@@ -94,7 +94,7 @@ export function rateLimit(req: NextRequest): NextResponse | null {
 
 // Helper to get rate limit headers for successful requests
 export function getRateLimitHeaders(req: NextRequest): Record<string, string> {
-  const clientIp = req.ip || req.headers.get('x-forwarded-for') || 'unknown'
+  const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
   const userAgent = req.headers.get('user-agent') || 'unknown'
   const identifier = `${clientIp}-${userAgent}`
   const pathname = req.nextUrl.pathname
