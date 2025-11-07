@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ArrowRight, Shield, Zap, TrendingDown, X } from 'lucide-react'
+import { ArrowRight, Shield, Zap, TrendingDown, X, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { signIn, signUp } from '@/lib/supabase/auth'
 import ShipWheelLogo from '@/components/ShipWheelLogo'
@@ -231,11 +231,13 @@ export default function BosunLanding() {
         <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32 w-full z-10">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-light leading-tight mb-6 md:mb-8 tracking-tight text-white">
-              Maritime settlement,<br />reimagined
+              Maritime settlement, reimagined.
             </h1>
+            <p className="text-xl md:text-2xl font-light text-gray-100 mb-4 md:mb-6 leading-relaxed">
+              Still waiting 3-5 days for payment? There's a better way.
+            </p>
             <p className="text-base md:text-xl font-light text-gray-200 mb-8 md:mb-12 leading-relaxed">
-              Reduce transaction costs by 85%. Settle in minutes, not days.
-              Purpose-built for the maritime industry.
+              Reduce costs. Accelerate cash flow. Simplify operations.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
               <button
@@ -246,65 +248,51 @@ export default function BosunLanding() {
                 <ArrowRight size={16} />
               </button>
               <button className="px-6 md:px-8 py-3 md:py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors">
-                View Demo
+                Schedule Demo
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="border-t border-b border-gray-200 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 text-center md:text-left">
-            <div>
-              <div className="text-4xl md:text-5xl font-light mb-2 md:mb-3">85%</div>
-              <div className="text-xs md:text-sm font-light text-gray-600">Cost reduction vs traditional settlement</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-light mb-2 md:mb-3">20min</div>
-              <div className="text-xs md:text-sm font-light text-gray-600">Average settlement time</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-light mb-2 md:mb-3">$655B</div>
-              <div className="text-xs md:text-sm font-light text-gray-600">Global maritime trade volume</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
+      {/* Value Propositions Section */}
       <section id="benefits" className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32">
-        <h2 className="text-3xl md:text-5xl font-light mb-12 md:mb-20 text-center">Built for efficiency</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16">
-          <div>
-            <div className="w-12 h-12 mb-6 flex items-center justify-center">
-              <TrendingDown size={32} strokeWidth={1} />
-            </div>
-            <h3 className="text-2xl font-light mb-4">Dramatically lower costs</h3>
-            <p className="text-gray-600 font-light leading-relaxed">
-              Traditional wire transfers cost 2-3% per transaction. Bosun reduces 
-              settlement costs to 0.4-0.8% through advanced network optimization.
-            </p>
-          </div>
+        <h2 className="text-3xl md:text-5xl font-light mb-12 md:mb-20 text-center">Why leading maritime companies choose Bosun</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16">
           <div>
             <div className="w-12 h-12 mb-6 flex items-center justify-center">
               <Zap size={32} strokeWidth={1} />
             </div>
-            <h3 className="text-2xl font-light mb-4">Settle in minutes</h3>
+            <h3 className="text-2xl font-light mb-4">Settlements completed same business day</h3>
             <p className="text-gray-600 font-light leading-relaxed">
-              No more 3-5 day wire transfers. Bosun processes settlements twice 
-              daily with 10-20 minute confirmation times.
+              No more waiting. No more uncertainty. Funds settled and confirmed within 24 hours, with options as fast as 30 minutes.
+            </p>
+          </div>
+          <div>
+            <div className="w-12 h-12 mb-6 flex items-center justify-center">
+              <TrendingDown size={32} strokeWidth={1} />
+            </div>
+            <h3 className="text-2xl font-light mb-4">Reduce transaction costs significantly</h3>
+            <p className="text-gray-600 font-light leading-relaxed">
+              Stop paying 2-3% in fees and hidden charges. Transparent pricing based on your settlement needs.
             </p>
           </div>
           <div>
             <div className="w-12 h-12 mb-6 flex items-center justify-center">
               <Shield size={32} strokeWidth={1} />
             </div>
-            <h3 className="text-2xl font-light mb-4">Enhanced security</h3>
+            <h3 className="text-2xl font-light mb-4">Single platform for all counterparties</h3>
             <p className="text-gray-600 font-light leading-relaxed">
-              Advanced fraud detection and multilateral verification ensure every 
-              transaction is authentic and authorized.
+              One account. One system. Handle all your maritime payments with charterers, owners, suppliers, and brokers.
+            </p>
+          </div>
+          <div>
+            <div className="w-12 h-12 mb-6 flex items-center justify-center">
+              <ArrowRight size={32} strokeWidth={1} />
+            </div>
+            <h3 className="text-2xl font-light mb-4">Working capital optimization included</h3>
+            <p className="text-gray-600 font-light leading-relaxed">
+              Pre-fund your account and earn returns on idle balances. Access your funds when you need them.
             </p>
           </div>
         </div>
@@ -312,40 +300,14 @@ export default function BosunLanding() {
 
       {/* How It Works Section */}
       <section id="how" className="border-t border-gray-200 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32">
-          <h2 className="text-3xl md:text-5xl font-light mb-12 md:mb-20 text-center">Seamless integration</h2>
-          <div className="max-w-3xl mx-auto space-y-16">
-            <div className="flex gap-8">
-              <div className="text-4xl font-light text-gray-300">01</div>
-              <div>
-                <h3 className="text-2xl font-light mb-3">Record transactions</h3>
-                <p className="text-gray-600 font-light leading-relaxed">
-                  Enter trade details through our simple interface or upload 
-                  documents for automatic processing.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-8">
-              <div className="text-4xl font-light text-gray-300">02</div>
-              <div>
-                <h3 className="text-2xl font-light mb-3">Network optimization</h3>
-                <p className="text-gray-600 font-light leading-relaxed">
-                  Our proprietary system analyzes your obligations across all 
-                  counterparties to minimize settlement requirements.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-8">
-              <div className="text-4xl font-light text-gray-300">03</div>
-              <div>
-                <h3 className="text-2xl font-light mb-3">Instant settlement</h3>
-                <p className="text-gray-600 font-light leading-relaxed">
-                  Receive your settlement notification and confirm. Funds are 
-                  settled within minutes, twice daily.
-                </p>
-              </div>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32 text-center">
+          <h2 className="text-3xl md:text-5xl font-light mb-8 md:mb-12">How it works</h2>
+          <div className="text-xl md:text-3xl font-light mb-6 md:mb-8 text-gray-800">
+            Fund your account → Execute trades → Receive settlements
           </div>
+          <p className="text-base md:text-xl font-light text-gray-600 max-w-3xl mx-auto">
+            That's it. No complex integrations. No lengthy onboarding. Operational within 48 hours.
+          </p>
         </div>
       </section>
 
@@ -362,74 +324,58 @@ export default function BosunLanding() {
         </div>
       </section>
 
+      {/* Trust Signals Section */}
+      <section className="border-t border-b border-gray-200 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            <div className="flex items-center gap-3">
+              <CheckCircle size={24} strokeWidth={1.5} className="text-green-600 flex-shrink-0" />
+              <span className="text-sm md:text-base font-light">Licensed and regulated by DIFC</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle size={24} strokeWidth={1.5} className="text-green-600 flex-shrink-0" />
+              <span className="text-sm md:text-base font-light">Bank-grade security and compliance</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle size={24} strokeWidth={1.5} className="text-green-600 flex-shrink-0" />
+              <span className="text-sm md:text-base font-light">Serving MENA maritime trade</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <CheckCircle size={24} strokeWidth={1.5} className="text-green-600 flex-shrink-0" />
+              <span className="text-sm md:text-base font-light">Member deposits protected</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="border-t border-gray-200 bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-32 text-center">
-          <h2 className="text-3xl md:text-5xl font-light mb-6 md:mb-8">Ready to optimize your settlements?</h2>
+          <h2 className="text-3xl md:text-5xl font-light mb-6 md:mb-8">Join forward-thinking maritime companies already saving time and money.</h2>
           <p className="text-base md:text-xl font-light mb-8 md:mb-12 text-gray-300">
-            Join the maritime companies already saving millions with Bosun.
+            See how much you could save on your next settlement.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Your email address"
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              className="flex-1 px-6 py-4 bg-white text-black text-sm font-light focus:outline-none focus:ring-2 focus:ring-white"
-            />
-            <button 
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+            <button
               onClick={() => router.push('/auth/register')}
               className="px-8 py-4 bg-white text-black text-sm font-light hover:bg-gray-100 transition-colors"
             >
-              Request Access
+              Calculate Savings
+            </button>
+            <button
+              className="px-8 py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors"
+            >
+              Contact Sales
             </button>
           </div>
-          <p className="text-xs font-light text-gray-400 mt-6">
-            Limited to qualified maritime trade participants
-          </p>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-gray-800 bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <ShipWheelLogo size={24} className="text-white" />
-                <div className="text-xl font-light">BOSUN</div>
-              </div>
-              <p className="text-sm font-light text-gray-400">
-                Maritime settlement infrastructure
-              </p>
-            </div>
-            <div>
-              <div className="text-sm font-light mb-4">Product</div>
-              <ul className="space-y-2 text-sm font-light text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
-              </ul>
-            </div>
-            <div>
-              <div className="text-sm font-light mb-4">Company</div>
-              <ul className="space-y-2 text-sm font-light text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <div className="text-sm font-light mb-4">Legal</div>
-              <ul className="space-y-2 text-sm font-light text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Compliance</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 text-sm font-light text-gray-400 text-center">
-            © 2025 Bosun. All rights reserved.
+          <div className="text-sm font-light text-gray-400 text-center">
+            © 2025 Bosun | DIFC, Dubai | <a href="#" className="hover:text-white transition-colors">Terms</a> | <a href="#" className="hover:text-white transition-colors">Privacy</a> | <a href="#" className="hover:text-white transition-colors">Contact</a>
           </div>
         </div>
       </footer>
