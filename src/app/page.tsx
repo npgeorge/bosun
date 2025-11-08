@@ -2,10 +2,56 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ArrowRight, Shield, Zap, TrendingDown, X, CheckCircle } from 'lucide-react'
+import { ArrowRight, Shield, Zap, TrendingDown, X, CheckCircle, Mail } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { signIn, signUp } from '@/lib/supabase/auth'
 import ShipWheelLogo from '@/components/ShipWheelLogo'
+
+// Contact Modal Component
+function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white w-full max-w-md mx-4">
+        <div className="p-8">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-light">Get in Touch</h2>
+            <button onClick={onClose} className="hover:opacity-60 transition-opacity">
+              <X size={24} strokeWidth={1} />
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 p-4 border border-gray-200 hover:border-black transition-colors">
+              <Mail size={24} strokeWidth={1} className="text-gray-600" />
+              <div>
+                <div className="text-sm font-light text-gray-600 mb-1">Email our sales team</div>
+                <a
+                  href="mailto:sales@bosun.global"
+                  className="text-base font-light hover:underline"
+                >
+                  sales@bosun.global
+                </a>
+              </div>
+            </div>
+
+            <p className="text-sm font-light text-gray-600 leading-relaxed">
+              We typically respond within 24 hours. For immediate assistance, please include your company name and a brief description of your needs.
+            </p>
+
+            <button
+              onClick={onClose}
+              className="w-full py-4 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Login/Signup Modal Component
 function AuthModal({ isOpen, onClose, mode }: { isOpen: boolean; onClose: () => void; mode: string }) {
@@ -171,16 +217,23 @@ export default function BosunLanding() {
   const router = useRouter()
   const [emailInput, setEmailInput] = useState('')
   const [authModal, setAuthModal] = useState({ isOpen: false, mode: 'signin' })
+  const [contactModal, setContactModal] = useState(false)
 
   const openAuth = (mode: string) => setAuthModal({ isOpen: true, mode })
   const closeAuth = () => setAuthModal({ isOpen: false, mode: 'signin' })
+  const openContact = () => setContactModal(true)
+  const closeContact = () => setContactModal(false)
 
   return (
     <div className="min-h-screen bg-white text-black">
-      <AuthModal 
-        isOpen={authModal.isOpen} 
-        onClose={closeAuth} 
+      <AuthModal
+        isOpen={authModal.isOpen}
+        onClose={closeAuth}
         mode={authModal.mode}
+      />
+      <ContactModal
+        isOpen={contactModal}
+        onClose={closeContact}
       />
 
       {/* Navigation */}
@@ -247,7 +300,10 @@ export default function BosunLanding() {
                 Get Started
                 <ArrowRight size={16} />
               </button>
-              <button className="px-6 md:px-8 py-3 md:py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors">
+              <button
+                onClick={openContact}
+                className="px-6 md:px-8 py-3 md:py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors"
+              >
                 Schedule Demo
               </button>
             </div>
@@ -357,12 +413,13 @@ export default function BosunLanding() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
             <button
-              onClick={() => router.push('/auth/register')}
+              onClick={() => router.push('/calculator')}
               className="px-8 py-4 bg-white text-black text-sm font-light hover:bg-gray-100 transition-colors"
             >
               Calculate Savings
             </button>
             <button
+              onClick={openContact}
               className="px-8 py-4 border border-white text-white text-sm font-light hover:bg-white hover:text-black transition-colors"
             >
               Contact Sales
@@ -375,7 +432,7 @@ export default function BosunLanding() {
       <footer className="border-t border-gray-800 bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
           <div className="text-sm font-light text-gray-400 text-center">
-            © 2025 Bosun | DIFC, Dubai | <a href="#" className="hover:text-white transition-colors">Terms</a> | <a href="#" className="hover:text-white transition-colors">Privacy</a> | <a href="#" className="hover:text-white transition-colors">Contact</a>
+            © 2025 Bosun | DIFC, Dubai | <a href="/terms" className="hover:text-white transition-colors">Terms</a> | <a href="/privacy" className="hover:text-white transition-colors">Privacy</a> | <a href="/contact" className="hover:text-white transition-colors">Contact</a>
           </div>
         </div>
       </footer>
