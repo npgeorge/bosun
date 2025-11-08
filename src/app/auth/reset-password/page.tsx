@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { resetPassword } from '@/lib/supabase/auth'
 import { createClient } from '@/lib/supabase/client'
@@ -10,7 +10,6 @@ import ShipWheelLogo from '@/components/ShipWheelLogo'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
