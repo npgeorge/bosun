@@ -224,17 +224,30 @@ export default function SavingsCalculatorPage() {
               <div>
                 <div className="flex items-start gap-3 mb-3">
                   <DollarSign size={24} strokeWidth={1} className="mt-1 flex-shrink-0" />
-                  <div>
+                  <div className="w-full">
                     <div className="text-sm font-light text-gray-300 mb-1">
-                      Working Capital Unlocked
+                      Working Capital Requirements
                     </div>
-                    <div className="text-3xl md:text-4xl font-light">
-                      {formatCurrency(savings.workingCapitalUnlocked)}
+                    <div className="space-y-3 mt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-light text-gray-400">Traditional settlement:</span>
+                        <span className="text-lg font-light">{formatCurrency(savings.workingCapitalUnlocked)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-light text-gray-400">With Bosun:</span>
+                        <span className="text-lg font-light">$0</span>
+                      </div>
+                      <div className="pt-3 border-t border-gray-700">
+                        <div className="flex justify-between items-center">
+                          <span className="text-base font-light text-gray-300">Capital Freed:</span>
+                          <span className="text-3xl md:text-4xl font-light">{formatCurrency(savings.workingCapitalUnlocked)}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <p className="text-sm font-light text-gray-400">
-                  Permanent increase in available cash from faster settlements
+                <p className="text-sm font-light text-gray-400 mt-3">
+                  Average amount tied up in transit with traditional settlements
                 </p>
               </div>
 
@@ -291,14 +304,19 @@ export default function SavingsCalculatorPage() {
             </div>
 
             <div>
-              <h4 className="font-normal mb-2">Working Capital Unlocked</h4>
+              <h4 className="font-normal mb-2">Working Capital Requirements</h4>
               <p className="text-xs text-gray-600 mb-1">
-                Working Capital Unlocked = (Annual Volume ÷ 365 days) × Days Accelerated
+                Traditional Float = (Annual Volume ÷ 365 days) × Settlement Days
+              </p>
+              <p className="text-xs text-gray-600 mb-3">
+                With traditional 4-day settlements, this amount is constantly tied up "in flight" — waiting for payments to clear.
+                It represents the average daily cash balance you need to maintain as a buffer for unsettled transactions.
+              </p>
+              <p className="text-xs text-gray-600 mb-1">
+                <strong>With Bosun:</strong> Same-day settlement means $0 trapped in transit.
               </p>
               <p className="text-xs text-gray-600">
-                This represents the <strong>permanent increase</strong> in available cash from faster settlements.
-                With Bosun's same-day settlement vs. traditional 3-5 day wire transfers, you free up 4 days worth of
-                capital that's no longer tied up in transit. This cash becomes immediately available for your business operations.
+                <strong>Capital Freed:</strong> The difference is permanently available for your operations, debt reduction, or investment.
               </p>
             </div>
 
