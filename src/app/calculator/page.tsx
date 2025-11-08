@@ -239,10 +239,10 @@ export default function SavingsCalculatorPage() {
                   </div>
                 </div>
                 <p className="text-sm font-light text-gray-400">
-                  Freed up permanently from same-day vs 4-day settlement
+                  Permanent increase in available cash (one-time unlock)
                 </p>
                 <p className="text-xs font-light text-gray-500 mt-2">
-                  Annual benefit: {formatCurrency(savings.annualCashFlowBenefit)} (at 5% cost of capital)
+                  Opportunity cost savings: {formatCurrency(savings.annualCashFlowBenefit)}/year (5% return on freed capital)
                 </p>
               </div>
 
@@ -301,14 +301,18 @@ export default function SavingsCalculatorPage() {
             <div>
               <h4 className="font-normal mb-2">Working Capital Unlocked</h4>
               <p className="text-xs text-gray-600 mb-1">
-                Working Capital = (Annual Volume ÷ 365 days) × Days Accelerated
+                Working Capital Unlocked = (Annual Volume ÷ 365 days) × Days Accelerated
               </p>
               <p className="text-xs text-gray-600 mb-2">
-                Based on 4-day settlement acceleration (same-day with Bosun vs. 3-5 day traditional wire transfers).
-                This represents the permanent increase in available cash that's no longer tied up waiting for settlements.
+                This is the <strong>permanent, one-time increase</strong> in available cash that's freed up from faster settlements.
+                Instead of having money tied up for 4 extra days in transit, it's immediately available in your account.
+              </p>
+              <p className="text-xs text-gray-600 mb-1">
+                Annual Benefit = Working Capital Unlocked × Cost of Capital (5%)
               </p>
               <p className="text-xs text-gray-600">
-                Annual Benefit = Working Capital × Cost of Capital (5%)
+                The annual benefit represents the opportunity cost savings - what you save by having that cash available
+                to invest, pay down debt, or avoid borrowing costs. Think of it as the "interest" on your freed-up capital.
               </p>
             </div>
 
