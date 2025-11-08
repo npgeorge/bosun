@@ -433,6 +433,14 @@ export default function DashboardClient({ member, transactions, documents, settl
             >
               Documents
             </button>
+            <button
+              onClick={() => { setActiveTab('test-settlement'); setMobileMenuOpen(false); }}
+              className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
+                activeTab === 'test-settlement' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              }`}
+            >
+              Test Settlement
+            </button>
           </div>
         </nav>
 
@@ -1574,6 +1582,242 @@ export default function DashboardClient({ member, transactions, documents, settl
                   </>
                 )
               })()}
+            </div>
+          )}
+
+          {activeTab === 'test-settlement' && (
+            <div className="max-w-6xl">
+              {/* Page Header */}
+              <div className="mb-8 md:mb-12">
+                <h1 className="text-3xl md:text-4xl font-light text-black mb-2">Test Settlement</h1>
+                <p className="text-gray-600 font-light">
+                  Run virtual settlement scenarios to understand the flow and test the platform
+                </p>
+              </div>
+
+              {/* Test Scenario Setup */}
+              <div className="border border-gray-200 mb-8">
+                <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                  <h2 className="text-xl font-light text-black">Settlement Scenario</h2>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm font-light text-gray-700 mb-4">
+                        This will simulate a settlement cycle based on your current transaction data.
+                        The test will show you what settlements would be created, how much could be saved
+                        through netting, and help you understand the complete settlement flow.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 p-4 rounded">
+                      <h3 className="text-sm font-medium text-blue-900 mb-2">What this test will show:</h3>
+                      <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
+                        <li>Settlement calculations based on current transactions</li>
+                        <li>Network netting efficiency and savings</li>
+                        <li>Required settlements and amounts</li>
+                        <li>Fee calculations</li>
+                        <li>Any potential issues or violations</li>
+                      </ul>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <button
+                        onClick={testSettlement}
+                        disabled={testingSettlement}
+                        className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+                      >
+                        <Play size={16} />
+                        {testingSettlement ? 'Running Test...' : 'Run Settlement Test'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Settlement Test Results */}
+              {settlementResult && (
+                <div className={`border mb-8 ${
+                  isSettlementError(settlementResult)
+                    ? 'border-red-200 bg-red-50'
+                    : isNoTransactions(settlementResult)
+                    ? 'border-yellow-200 bg-yellow-50'
+                    : 'border-green-200 bg-green-50'
+                }`}>
+                  <div className={`border-b px-6 py-4 ${
+                    isSettlementError(settlementResult)
+                      ? 'border-red-200 bg-red-100'
+                      : isNoTransactions(settlementResult)
+                      ? 'border-yellow-200 bg-yellow-100'
+                      : 'border-green-200 bg-green-100'
+                  }`}>
+                    <h2 className="text-xl font-light text-black">Test Results</h2>
+                  </div>
+                  <div className="p-6">
+                    {isSettlementSimulation(settlementResult) ? (
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-light text-black mb-4">Settlement Summary</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div className="bg-white border border-gray-200 p-4">
+                              <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
+                                Total Transactions
+                              </div>
+                              <div className="text-2xl font-light text-black">
+                                {settlementResult.totalTransactions || 0}
+                              </div>
+                            </div>
+                            <div className="bg-white border border-gray-200 p-4">
+                              <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
+                                Total Volume
+                              </div>
+                              <div className="text-2xl font-light text-black">
+                                ${(settlementResult.totalVolume || 0).toLocaleString()}
+                              </div>
+                            </div>
+                            <div className="bg-white border border-gray-200 p-4">
+                              <div className="text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
+                                Settlements Required
+                              </div>
+                              <div className="text-2xl font-light text-black">
+                                {settlementResult.netSettlements || 0}
+                              </div>
+                            </div>
+                          </div>
+
+                          {settlementResult.savingsPercentage !== undefined && (
+                            <div className="bg-green-100 border border-green-300 p-4 rounded mb-6">
+                              <div className="flex items-center gap-3 mb-2">
+                                <TrendingDown size={24} strokeWidth={1} className="text-green-700" />
+                                <div className="text-lg font-light text-green-900">
+                                  Network Efficiency: {settlementResult.savingsPercentage.toFixed(1)}%
+                                </div>
+                              </div>
+                              <p className="text-sm text-green-800">
+                                Through multilateral netting, only {settlementResult.netSettlements} settlement{settlementResult.netSettlements !== 1 ? 's' : ''} needed
+                                instead of {settlementResult.totalTransactions} individual transactions.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {settlementResult.settlements && settlementResult.settlements.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-light text-black mb-4">Required Settlements</h3>
+                            <div className="space-y-3">
+                              {settlementResult.settlements.map((settlement: any, idx: number) => (
+                                <div key={idx} className="bg-white border border-gray-200 p-4 flex justify-between items-center">
+                                  <div className="flex-1">
+                                    <div className="text-sm font-light text-gray-600">
+                                      {counterpartyMap[settlement.from_member_id] || settlement.from_member_id}
+                                      {' → '}
+                                      {counterpartyMap[settlement.to_member_id] || settlement.to_member_id}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-lg font-light text-black">
+                                      ${settlement.amount_usd.toLocaleString()}
+                                    </div>
+                                    {settlement.fee_usd > 0 && (
+                                      <div className="text-xs font-light text-gray-500">
+                                        Fee: ${settlement.fee_usd.toLocaleString()}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {settlementResult.details && (
+                          <div>
+                            <h3 className="text-lg font-light text-black mb-4">Technical Details</h3>
+                            <div className="bg-gray-900 text-green-400 p-4 rounded font-mono text-xs overflow-x-auto">
+                              <pre className="whitespace-pre-wrap">
+                                {typeof settlementResult.details === 'string'
+                                  ? settlementResult.details
+                                  : JSON.stringify(settlementResult.details, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+
+                        {settlementResult.violations && settlementResult.violations.length > 0 && (
+                          <div className="bg-red-50 border border-red-200 p-4 rounded">
+                            <h3 className="text-lg font-medium text-red-900 mb-2">Circuit Breaker Violations</h3>
+                            <ul className="list-disc list-inside text-sm text-red-800 space-y-1">
+                              {settlementResult.violations.map((violation: string, idx: number) => (
+                                <li key={idx}>{violation}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ) : isNoTransactions(settlementResult) ? (
+                      <div className="flex items-center gap-3">
+                        <Activity size={24} strokeWidth={1} className="text-yellow-600" />
+                        <div>
+                          <p className="text-yellow-900 font-light mb-1">
+                            {settlementResult.message}
+                          </p>
+                          <p className="text-sm text-yellow-800">
+                            Create some transactions first, then run the settlement test to see how netting works.
+                          </p>
+                        </div>
+                      </div>
+                    ) : isSettlementError(settlementResult) ? (
+                      <div>
+                        <div className="flex items-center gap-3 mb-4">
+                          <X size={24} strokeWidth={1} className="text-red-600" />
+                          <div>
+                            <p className="text-red-900 font-light mb-1">
+                              {settlementResult.message || 'Settlement test failed'}
+                            </p>
+                          </div>
+                        </div>
+                        {settlementResult.details && (
+                          <div className="bg-red-100 border border-red-200 p-4 rounded">
+                            <pre className="text-xs text-red-800 whitespace-pre-wrap font-mono">
+                              {typeof settlementResult.details === 'string'
+                                ? settlementResult.details
+                                : JSON.stringify(settlementResult.details, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-6 flex justify-end">
+                      <button
+                        onClick={() => setSettlementResult(null)}
+                        className="px-6 py-2 text-sm font-light text-gray-700 hover:text-black transition-colors"
+                      >
+                        Clear Results
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Information Section */}
+              <div className="bg-gray-50 border border-gray-200 p-6">
+                <h3 className="text-lg font-light text-black mb-4">About Settlement Testing</h3>
+                <div className="space-y-3 text-sm font-light text-gray-700">
+                  <p>
+                    This virtual testing environment allows you to simulate settlement cycles without affecting real transactions.
+                    It's designed to help you understand how Bosun's multilateral netting system works.
+                  </p>
+                  <p>
+                    <strong>Key Concepts:</strong>
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li><strong>Multilateral Netting:</strong> Instead of settling each transaction individually, Bosun calculates net positions across all participants</li>
+                    <li><strong>Network Efficiency:</strong> The percentage reduction in required settlements compared to gross settlement</li>
+                    <li><strong>Circuit Breakers:</strong> Safety mechanisms that prevent settlements if certain risk thresholds are exceeded</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
         </main>
