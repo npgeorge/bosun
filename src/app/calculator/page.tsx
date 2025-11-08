@@ -17,6 +17,7 @@ export default function SavingsCalculatorPage() {
     totalAnnualBenefit: 0,
     monthlyTransactions: 0,
     timeSaved: 0,
+    workingCapitalUnlocked: 0,
   })
 
   useEffect(() => {
@@ -37,13 +38,20 @@ export default function SavingsCalculatorPage() {
     const bosunMonthlyFees = volume * bosunRate
     const monthlyFeeSavings = currentMonthlyFees - bosunMonthlyFees
 
-    // Cash flow benefit (assuming 3-5 days faster settlement at 5% annual cost of capital)
-    // Average 4 days * (5% / 365) * monthly volume
-    const monthlyCashFlowBenefit = volume * (4 / 365) * 0.05
+    // Working capital calculation
+    // Assuming 4 days faster settlement (same-day vs 3-5 day traditional rails)
+    const annualVolume = volume * 12
+    const daysAccelerated = 4
+    const costOfCapital = 0.05 // 5% annual cost of capital
+
+    // Working capital unlocked = (Annual volume / 365 days) × days accelerated
+    const workingCapitalUnlocked = (annualVolume / 365) * daysAccelerated
+
+    // Annual benefit = Working capital unlocked × cost of capital
+    const annualCashFlowBenefit = workingCapitalUnlocked * costOfCapital
 
     // Annual totals
     const annualFeeSavings = monthlyFeeSavings * 12
-    const annualCashFlowBenefit = monthlyCashFlowBenefit * 12
     const totalAnnualBenefit = annualFeeSavings + annualCashFlowBenefit
 
     // Time saved (assuming 2 hours per transaction manually tracking/reconciling)
@@ -56,6 +64,7 @@ export default function SavingsCalculatorPage() {
       totalAnnualBenefit: Math.round(totalAnnualBenefit),
       monthlyTransactions: Math.round(monthlyTransactions),
       timeSaved: Math.round(timeSaved),
+      workingCapitalUnlocked: Math.round(workingCapitalUnlocked),
     })
   }
 
@@ -222,15 +231,18 @@ export default function SavingsCalculatorPage() {
                   <DollarSign size={24} strokeWidth={1} className="mt-1 flex-shrink-0" />
                   <div>
                     <div className="text-sm font-light text-gray-300 mb-1">
-                      Cash Flow Benefit
+                      Working Capital Unlocked
                     </div>
                     <div className="text-3xl md:text-4xl font-light">
-                      {formatCurrency(savings.annualCashFlowBenefit)}
+                      {formatCurrency(savings.workingCapitalUnlocked)}
                     </div>
                   </div>
                 </div>
                 <p className="text-sm font-light text-gray-400">
-                  From same-day settlements vs. 3-5 day delays
+                  Freed up permanently from same-day vs 4-day settlement
+                </p>
+                <p className="text-xs font-light text-gray-500 mt-2">
+                  Annual benefit: {formatCurrency(savings.annualCashFlowBenefit)} (at 5% cost of capital)
                 </p>
               </div>
 
@@ -271,14 +283,52 @@ export default function SavingsCalculatorPage() {
           </div>
         </div>
 
-        {/* Disclaimer */}
-        <div className="mt-12 max-w-4xl mx-auto text-center">
-          <p className="text-xs font-light text-gray-500 leading-relaxed">
-            Savings calculations are estimates based on typical industry rates and scenarios.
-            Actual savings may vary based on your specific transaction patterns, volume,
-            settlement preferences, and current banking relationships. Cash flow benefits
-            assume a 5% annual cost of capital and 4-day settlement acceleration.
-          </p>
+        {/* Methodology */}
+        <div className="mt-12 max-w-4xl mx-auto">
+          <h3 className="text-xl font-light mb-6 text-center">Calculation Methodology</h3>
+
+          <div className="space-y-6 text-sm font-light text-gray-700 bg-gray-50 p-6 md:p-8 rounded border border-gray-200">
+            <div>
+              <h4 className="font-normal mb-2">Fee Savings</h4>
+              <p className="text-xs text-gray-600 mb-1">
+                Annual Fee Savings = (Your Current Rate - Bosun Rate) × Annual Volume
+              </p>
+              <p className="text-xs text-gray-600">
+                Compares your current transaction fees to Bosun's competitive 0.5% rate.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-normal mb-2">Working Capital Unlocked</h4>
+              <p className="text-xs text-gray-600 mb-1">
+                Working Capital = (Annual Volume ÷ 365 days) × Days Accelerated
+              </p>
+              <p className="text-xs text-gray-600 mb-2">
+                Based on 4-day settlement acceleration (same-day with Bosun vs. 3-5 day traditional wire transfers).
+                This represents the permanent increase in available cash that's no longer tied up waiting for settlements.
+              </p>
+              <p className="text-xs text-gray-600">
+                Annual Benefit = Working Capital × Cost of Capital (5%)
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-normal mb-2">Time Savings</h4>
+              <p className="text-xs text-gray-600">
+                Based on 1.8 hours saved per transaction through automated settlement tracking and reconciliation
+                compared to manual processes (wire confirmations, payment tracking, manual reconciliation).
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-gray-300">
+              <p className="text-xs text-gray-500 italic">
+                <strong>Disclaimer:</strong> These calculations are estimates based on typical industry scenarios.
+                Actual savings vary based on your transaction patterns, volume, current banking relationships,
+                and settlement preferences. Cost of capital assumes 5% WACC. Settlement acceleration assumes
+                traditional 3-5 day wire transfers vs. Bosun's same-day settlement capability.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
