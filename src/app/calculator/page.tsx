@@ -247,7 +247,7 @@ export default function SavingsCalculatorPage() {
                   </div>
                 </div>
                 <p className="text-sm font-light text-gray-400 mt-3">
-                  Average amount tied up in transit with traditional settlements
+                  ~{Math.round((savings.workingCapitalUnlocked / parseFloat(monthlyVolume)) * 100)}% of monthly volume tied up in transit
                 </p>
               </div>
 
