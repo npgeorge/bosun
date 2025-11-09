@@ -1664,7 +1664,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                                 Total Transactions
                               </div>
                               <div className="text-2xl font-light text-black">
-                                {settlementResult.totalTransactions || 0}
+                                {settlementResult.preview.transactions_to_process || 0}
                               </div>
                             </div>
                             <div className="bg-white border border-gray-200 p-4">
@@ -1672,7 +1672,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                                 Total Volume
                               </div>
                               <div className="text-2xl font-light text-black">
-                                ${(settlementResult.totalVolume || 0).toLocaleString()}
+                                ${(settlementResult.preview.total_volume || 0).toLocaleString()}
                               </div>
                             </div>
                             <div className="bg-white border border-gray-200 p-4">
@@ -1680,22 +1680,22 @@ export default function DashboardClient({ member, transactions, documents, settl
                                 Settlements Required
                               </div>
                               <div className="text-2xl font-light text-black">
-                                {settlementResult.netSettlements || 0}
+                                {settlementResult.preview.settlements_generated || 0}
                               </div>
                             </div>
                           </div>
 
-                          {settlementResult.savingsPercentage !== undefined && (
+                          {settlementResult.preview.estimated_savings_percentage && (
                             <div className="bg-green-100 border border-green-300 p-4 rounded mb-6">
                               <div className="flex items-center gap-3 mb-2">
                                 <TrendingDown size={24} strokeWidth={1} className="text-green-700" />
                                 <div className="text-lg font-light text-green-900">
-                                  Network Efficiency: {settlementResult.savingsPercentage.toFixed(1)}%
+                                  Network Efficiency: {settlementResult.preview.estimated_savings_percentage}%
                                 </div>
                               </div>
                               <p className="text-sm text-green-800">
-                                Through multilateral netting, only {settlementResult.netSettlements} settlement{settlementResult.netSettlements !== 1 ? 's' : ''} needed
-                                instead of {settlementResult.totalTransactions} individual transactions.
+                                Through multilateral netting, only {settlementResult.preview.settlements_generated} settlement{settlementResult.preview.settlements_generated !== 1 ? 's' : ''} needed
+                                instead of {settlementResult.preview.transactions_to_process} individual transactions.
                               </p>
                             </div>
                           )}
@@ -1716,11 +1716,11 @@ export default function DashboardClient({ member, transactions, documents, settl
                                   </div>
                                   <div className="text-right">
                                     <div className="text-lg font-light text-black">
-                                      ${settlement.amount_usd.toLocaleString()}
+                                      ${settlement.amount.toLocaleString()}
                                     </div>
-                                    {settlement.fee_usd > 0 && (
+                                    {settlement.fee > 0 && (
                                       <div className="text-xs font-light text-gray-500">
-                                        Fee: ${settlement.fee_usd.toLocaleString()}
+                                        Fee: ${settlement.fee.toLocaleString()}
                                       </div>
                                     )}
                                   </div>
@@ -1730,25 +1730,12 @@ export default function DashboardClient({ member, transactions, documents, settl
                           </div>
                         )}
 
-                        {settlementResult.details && (
-                          <div>
-                            <h3 className="text-lg font-light text-black mb-4">Technical Details</h3>
-                            <div className="bg-gray-900 text-green-400 p-4 rounded font-mono text-xs overflow-x-auto">
-                              <pre className="whitespace-pre-wrap">
-                                {typeof settlementResult.details === 'string'
-                                  ? settlementResult.details
-                                  : JSON.stringify(settlementResult.details, null, 2)}
-                              </pre>
-                            </div>
-                          </div>
-                        )}
-
-                        {settlementResult.violations && settlementResult.violations.length > 0 && (
-                          <div className="bg-red-50 border border-red-200 p-4 rounded">
-                            <h3 className="text-lg font-medium text-red-900 mb-2">Circuit Breaker Violations</h3>
-                            <ul className="list-disc list-inside text-sm text-red-800 space-y-1">
-                              {settlementResult.violations.map((violation: string, idx: number) => (
-                                <li key={idx}>{violation}</li>
+                        {settlementResult.circuit_breakers.warnings && settlementResult.circuit_breakers.warnings.length > 0 && (
+                          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded">
+                            <h3 className="text-lg font-medium text-yellow-900 mb-2">Circuit Breaker Warnings</h3>
+                            <ul className="list-disc list-inside text-sm text-yellow-800 space-y-1">
+                              {settlementResult.circuit_breakers.warnings.map((warning, idx: number) => (
+                                <li key={idx}>{warning.message}</li>
                               ))}
                             </ul>
                           </div>
