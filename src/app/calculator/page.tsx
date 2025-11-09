@@ -39,10 +39,10 @@ export default function SavingsCalculatorPage() {
     const monthlyFeeSavings = currentMonthlyFees - bosunMonthlyFees
 
     // Working capital calculation
-    // Traditional banking: ~5 days average (4 business days + weekends + cutoff times)
+    // Traditional banking: ~4.8 days average based on cutoff times and weekends
     // Bosun: Same-day, 24/7/365
     const annualVolume = volume * 12
-    const daysAccelerated = 5
+    const daysAccelerated = 4.8
 
     // Working capital unlocked = (Annual volume / 365 days) × days accelerated
     const workingCapitalUnlocked = (annualVolume / 365) * daysAccelerated
@@ -310,17 +310,48 @@ export default function SavingsCalculatorPage() {
             <div>
               <h4 className="font-normal mb-2">Working Capital Requirements</h4>
               <p className="text-xs text-gray-600 mb-1">
-                Traditional Float = (Annual Volume ÷ 365 days) × Settlement Days (5 days average)
+                Traditional Float = (Annual Volume ÷ 365 days) × Settlement Days (4.8 days average)
               </p>
               <p className="text-xs text-gray-600 mb-2">
-                Traditional banking settlement averages 5 calendar days due to:
+                Traditional banking settlement averages <strong>4.8 calendar days</strong> based on detailed analysis:
               </p>
-              <ul className="text-xs text-gray-600 list-disc list-inside ml-2 mb-3 space-y-1">
-                <li>4 business days for wire transfers</li>
-                <li>Weekend delays (transactions initiated Thursday-Friday add 2+ days)</li>
-                <li>Banking cutoff times (afternoon transactions delayed to next day)</li>
-                <li>Business hours only (9-5, Monday-Friday)</li>
-              </ul>
+              <div className="bg-white border border-gray-200 p-3 mb-3 text-xs">
+                <p className="text-gray-600 mb-2 font-medium">Weighted Average Breakdown (assuming even transaction distribution):</p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-1 text-gray-600 font-normal">Time Period</th>
+                      <th className="text-right py-1 text-gray-600 font-normal">% of Txns</th>
+                      <th className="text-right py-1 text-gray-600 font-normal">Settlement</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-700">
+                    <tr className="border-b border-gray-100">
+                      <td className="py-1">Mon-Thu before 2pm cutoff</td>
+                      <td className="text-right">50%</td>
+                      <td className="text-right">4 days</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-1">Mon-Thu after 2pm cutoff</td>
+                      <td className="text-right">30%</td>
+                      <td className="text-right">5 days</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-1">Friday before 2pm cutoff</td>
+                      <td className="text-right">12.5%</td>
+                      <td className="text-right">6 days</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1">Friday after 2pm cutoff</td>
+                      <td className="text-right">7.5%</td>
+                      <td className="text-right">7 days</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p className="text-gray-500 mt-2 italic">
+                  = (50% × 4) + (30% × 5) + (12.5% × 6) + (7.5% × 7) = 4.8 days
+                </p>
+              </div>
               <p className="text-xs text-gray-600 mb-3">
                 This amount is constantly tied up "in flight" — waiting for payments to clear.
                 It represents the average daily cash balance you need to maintain as a buffer for unsettled transactions.
@@ -345,8 +376,8 @@ export default function SavingsCalculatorPage() {
               <p className="text-xs text-gray-500 italic">
                 <strong>Disclaimer:</strong> These calculations are estimates based on typical industry scenarios.
                 Actual savings vary based on your transaction patterns, volume, current banking relationships,
-                and settlement preferences. Settlement acceleration assumes traditional wire transfers average 5 calendar days
-                (including weekends and banking hour limitations) vs. Bosun's same-day, 24/7/365 settlement capability.
+                and settlement preferences. Settlement acceleration assumes traditional wire transfers average 4.8 calendar days
+                (weighted average including cutoff times, weekends, and banking hour limitations) vs. Bosun's same-day, 24/7/365 settlement capability.
               </p>
             </div>
           </div>
