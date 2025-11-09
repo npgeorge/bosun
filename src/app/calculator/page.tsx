@@ -118,6 +118,27 @@ export default function SavingsCalculatorPage() {
         </div>
       </section>
 
+      {/* Key Insight Summary */}
+      <section className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="bg-blue-50 border border-blue-200 p-6 md:p-8 rounded">
+          <h2 className="text-xl md:text-2xl font-light text-blue-900 mb-4">The Hidden Cost of Traditional Banking</h2>
+          <p className="text-base font-light text-blue-800 mb-4">
+            Traditional wire transfers average <strong>4.8 calendar days</strong> to settle due to:
+          </p>
+          <ul className="text-sm font-light text-blue-800 space-y-2 mb-4 ml-4">
+            <li>• Business hours only (9am-5pm, Monday-Friday)</li>
+            <li>• 2pm cutoff times (afternoon transactions delayed to next day)</li>
+            <li>• Weekend delays (Friday transactions don't start until the following week)</li>
+          </ul>
+          <p className="text-base font-light text-blue-900">
+            <strong>Result:</strong> ~16% of your monthly volume is constantly locked in transit, unavailable for operations.
+          </p>
+          <p className="text-sm font-light text-blue-700 mt-4 italic">
+            Maritime operates 24/7 — your capital should too.
+          </p>
+        </div>
+      </section>
+
       {/* Calculator Section */}
       <section className="max-w-6xl mx-auto px-4 md:px-6 py-12 md:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
