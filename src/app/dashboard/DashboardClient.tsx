@@ -1,8 +1,8 @@
 // src/app/dashboard/DashboardClient.tsx
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import { ArrowUpRight, ArrowDownLeft, Clock, DollarSign, Plus, Settings, LogOut, Play, Search, Filter, Download, FileText, Upload, X, TrendingUp, TrendingDown, Activity, Calendar, Paperclip, Menu } from 'lucide-react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { ArrowUpRight, ArrowDownLeft, Clock, DollarSign, Plus, Settings, LogOut, Play, Search, Filter, Download, FileText, Upload, X, TrendingUp, TrendingDown, Activity, Calendar, Paperclip, Menu, Bell, Users, BarChart3, CheckCircle2, AlertCircle } from 'lucide-react'
 import { signOut } from '@/lib/supabase/auth'
 import { useRouter } from 'next/navigation'
 import type { SettlementResponse, SettlementErrorResponse } from '@/types/api'
@@ -89,6 +89,24 @@ export default function DashboardClient({ member, transactions, documents, settl
   const [transactionDocuments, setTransactionDocuments] = useState<Document[]>([])
   const [loadingDocuments, setLoadingDocuments] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // New filter states
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [amountMin, setAmountMin] = useState('')
+  const [amountMax, setAmountMax] = useState('')
+
+  // Notification states
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Bulk import states
+  const [showBulkImport, setShowBulkImport] = useState(false)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importPreview, setImportPreview] = useState<any[]>([])
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
 
   // Outstanding Tasks state
   const [bankingInfo, setBankingInfo] = useState({
@@ -307,6 +325,188 @@ export default function DashboardClient({ member, transactions, documents, settl
     }
   }
 
+  // Notifications - Load and subscribe to real-time updates
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Load initial notifications (mock for now - will be real-time)
+    const loadNotifications = async () => {
+      // This would fetch from a notifications table
+      // For now, we'll simulate with transaction changes
+      const recentTransactions = transactions.slice(0, 5).map(tx => ({
+        id: `notif-${tx.id}`,
+        type: 'transaction_created',
+        message: `New transaction from ${tx.counterparty}`,
+        data: tx,
+        read: false,
+        created_at: tx.createdAt
+      }))
+      setNotifications(recentTransactions)
+      setUnreadCount(recentTransactions.length)
+    }
+
+    loadNotifications()
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('transactions')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        (payload) => {
+          // Handle real-time updates
+          if (payload.eventType === 'INSERT') {
+            const newNotif = {
+              id: `notif-${payload.new.id}`,
+              type: 'transaction_created',
+              message: `New transaction received`,
+              data: payload.new,
+              read: false,
+              created_at: new Date().toISOString()
+            }
+            setNotifications(prev => [newNotif, ...prev])
+            setUnreadCount(prev => prev + 1)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [transactions])
+
+  // CSV Export function
+  async function exportToCSV() {
+    const csvRows = []
+
+    // Headers
+    csvRows.push(['Date', 'Counterparty', 'Reference', 'Type', 'Amount', 'Status', 'Description', 'Created At'].join(','))
+
+    // Data rows
+    filteredTransactions.forEach(tx => {
+      csvRows.push([
+        tx.date,
+        `"${tx.counterparty}"`,
+        `"${tx.reference || ''}"`,
+        tx.type === 'owed' ? 'Receivable' : 'Payable',
+        tx.amount,
+        tx.status,
+        `"${tx.description || ''}"`,
+        tx.createdAt
+      ].join(','))
+    })
+
+    const csvContent = csvRows.join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `bosun-transactions-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  // Bulk import CSV function
+  async function handleFileImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setImportFile(file)
+    setImportError('')
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string
+        const lines = text.split('\n')
+        const headers = lines[0].split(',').map(h => h.trim())
+
+        const preview = lines.slice(1, 6).map(line => {
+          const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''))
+          const row: any = {}
+          headers.forEach((header, i) => {
+            row[header] = values[i]
+          })
+          return row
+        }).filter(row => row.Counterparty) // Filter empty rows
+
+        setImportPreview(preview)
+      } catch (error) {
+        setImportError('Failed to parse CSV file. Please check the format.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  async function processBulkImport() {
+    if (!importFile) return
+
+    setImporting(true)
+    setImportError('')
+
+    try {
+      const reader = new FileReader()
+      reader.onload = async (event) => {
+        const text = event.target?.result as string
+        const lines = text.split('\n')
+        const headers = lines[0].split(',').map(h => h.trim())
+
+        const supabase = createClient()
+        const errors: string[] = []
+
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue
+
+          const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
+          const row: any = {}
+          headers.forEach((header, j) => {
+            row[header] = values[j]
+          })
+
+          // Insert transaction
+          try {
+            const { error } = await supabase.from('transactions').insert({
+              member_id: memberId,
+              counterparty_id: row.CounterpartyId || null,
+              amount: parseFloat(row.Amount),
+              type: row.Type?.toLowerCase() === 'receivable' ? 'owed' : 'owing',
+              trade_date: row.Date,
+              reference: row.Reference || '',
+              description: row.Description || '',
+              status: 'pending'
+            })
+
+            if (error) errors.push(`Row ${i}: ${error.message}`)
+          } catch (err) {
+            errors.push(`Row ${i}: Invalid data format`)
+          }
+        }
+
+        if (errors.length > 0) {
+          setImportError(`Import completed with ${errors.length} errors:\n${errors.join('\n')}`)
+        } else {
+          setShowBulkImport(false)
+          setImportFile(null)
+          setImportPreview([])
+          router.refresh()
+        }
+      }
+      reader.readAsText(importFile)
+    } catch (error) {
+      setImportError('Failed to import transactions. Please try again.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  // Mark notification as read
+  function markAsRead(notifId: string) {
+    setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true } : n))
+    setUnreadCount(prev => Math.max(0, prev - 1))
+  }
+
   // Filter and search transactions
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
@@ -322,9 +522,51 @@ export default function DashboardClient({ member, transactions, documents, settl
       // Type filter
       const matchesType = typeFilter === 'all' || tx.type === typeFilter
 
-      return matchesSearch && matchesStatus && matchesType
+      // Date range filter
+      const txDate = new Date(tx.date)
+      const matchesDateFrom = !dateFrom || txDate >= new Date(dateFrom)
+      const matchesDateTo = !dateTo || txDate <= new Date(dateTo)
+
+      // Amount range filter
+      const matchesAmountMin = !amountMin || tx.amount >= parseFloat(amountMin)
+      const matchesAmountMax = !amountMax || tx.amount <= parseFloat(amountMax)
+
+      return matchesSearch && matchesStatus && matchesType && matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax
     })
-  }, [transactions, searchQuery, statusFilter, typeFilter])
+  }, [transactions, searchQuery, statusFilter, typeFilter, dateFrom, dateTo, amountMin, amountMax])
+
+  // Calculate counterparty analytics
+  const counterpartyAnalytics = useMemo(() => {
+    const analytics: Record<string, {
+      name: string
+      totalTransactions: number
+      totalVolume: number
+      netPosition: number
+      lastTransactionDate: string
+    }> = {}
+
+    transactions.forEach(tx => {
+      if (!analytics[tx.counterparty]) {
+        analytics[tx.counterparty] = {
+          name: tx.counterparty,
+          totalTransactions: 0,
+          totalVolume: 0,
+          netPosition: 0,
+          lastTransactionDate: tx.date
+        }
+      }
+
+      analytics[tx.counterparty].totalTransactions++
+      analytics[tx.counterparty].totalVolume += tx.amount
+      analytics[tx.counterparty].netPosition += tx.type === 'owed' ? tx.amount : -tx.amount
+
+      if (new Date(tx.date) > new Date(analytics[tx.counterparty].lastTransactionDate)) {
+        analytics[tx.counterparty].lastTransactionDate = tx.date
+      }
+    })
+
+    return Object.values(analytics).sort((a, b) => b.totalVolume - a.totalVolume)
+  }, [transactions])
 
   // Format file size
   function formatFileSize(bytes: number): string {
@@ -359,6 +601,69 @@ export default function DashboardClient({ member, transactions, documents, settl
           </div>
           <div className="flex items-center gap-2 md:gap-6">
             <span className="text-xs md:text-sm font-light text-black hidden sm:inline">{member.companyName}</span>
+
+            {/* Notifications Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2 hover:bg-gray-50 transition-colors relative"
+              >
+                <Bell size={20} strokeWidth={1} className="text-black" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-light">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 shadow-lg z-50 max-h-96 overflow-y-auto">
+                  <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 className="font-light text-black">Notifications</h3>
+                    <button
+                      onClick={() => {
+                        setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+                        setUnreadCount(0)
+                      }}
+                      className="text-xs font-light text-gray-600 hover:text-black"
+                    >
+                      Mark all read
+                    </button>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 font-light text-sm">
+                      No notifications
+                    </div>
+                  ) : (
+                    <div>
+                      {notifications.map(notif => (
+                        <button
+                          key={notif.id}
+                          onClick={() => markAsRead(notif.id)}
+                          className={`w-full p-4 border-b border-gray-100 text-left hover:bg-gray-50 transition-colors ${
+                            !notif.read ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`mt-1 ${!notif.read ? 'text-blue-600' : 'text-gray-400'}`}>
+                              {notif.type === 'transaction_created' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-light text-black">{notif.message}</p>
+                              <p className="text-xs font-light text-gray-500 mt-1">
+                                {new Date(notif.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {isAdmin && (
               <button
                 onClick={() => router.push('/admin')}
@@ -418,6 +723,14 @@ export default function DashboardClient({ member, transactions, documents, settl
               Transactions
             </button>
             <button
+              onClick={() => { setActiveTab('counterparties'); setMobileMenuOpen(false); }}
+              className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
+                activeTab === 'counterparties' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              }`}
+            >
+              Counterparties
+            </button>
+            <button
               onClick={() => { setActiveTab('settlements'); setMobileMenuOpen(false); }}
               className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
                 activeTab === 'settlements' ? 'bg-gray-50' : 'hover:bg-gray-50'
@@ -432,6 +745,14 @@ export default function DashboardClient({ member, transactions, documents, settl
               }`}
             >
               Documents
+            </button>
+            <button
+              onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
+              className={`w-full text-left px-4 py-3 text-sm font-light transition-colors text-black ${
+                activeTab === 'reports' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              }`}
+            >
+              Reports & Export
             </button>
             <button
               onClick={() => { setActiveTab('test-settlement'); setMobileMenuOpen(false); }}
@@ -851,13 +1172,29 @@ export default function DashboardClient({ member, transactions, documents, settl
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 md:mb-12 gap-4">
                 <h1 className="text-3xl md:text-4xl font-light text-black">Transactions</h1>
-                <button
-                  onClick={() => router.push('/transactions/new')}
-                  className="px-4 md:px-6 py-2 md:py-3 bg-black text-white text-xs md:text-sm font-light hover:bg-gray-800 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
-                >
-                  <Plus size={16} />
-                  New Transaction
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={exportToCSV}
+                    className="px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-black text-xs md:text-sm font-light hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  >
+                    <Download size={16} />
+                    Export CSV
+                  </button>
+                  <button
+                    onClick={() => setShowBulkImport(true)}
+                    className="px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-black text-xs md:text-sm font-light hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  >
+                    <Upload size={16} />
+                    Bulk Import
+                  </button>
+                  <button
+                    onClick={() => router.push('/transactions/new')}
+                    className="px-4 md:px-6 py-2 md:py-3 bg-black text-white text-xs md:text-sm font-light hover:bg-gray-800 transition-colors flex items-center gap-2"
+                  >
+                    <Plus size={16} />
+                    New Transaction
+                  </button>
+                </div>
               </div>
 
               {/* Search and Filters */}
@@ -898,6 +1235,81 @@ export default function DashboardClient({ member, transactions, documents, settl
                     <option value="owing">Payable</option>
                   </select>
                 </div>
+
+                {/* Advanced Filters */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                  {/* Date From */}
+                  <div>
+                    <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
+                      Date From
+                    </label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full px-4 py-2 md:py-3 border border-gray-200 text-xs md:text-sm font-light text-black focus:outline-none focus:border-gray-400"
+                    />
+                  </div>
+
+                  {/* Date To */}
+                  <div>
+                    <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
+                      Date To
+                    </label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full px-4 py-2 md:py-3 border border-gray-200 text-xs md:text-sm font-light text-black focus:outline-none focus:border-gray-400"
+                    />
+                  </div>
+
+                  {/* Amount Min */}
+                  <div>
+                    <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
+                      Min Amount
+                    </label>
+                    <input
+                      type="number"
+                      value={amountMin}
+                      onChange={(e) => setAmountMin(e.target.value)}
+                      placeholder="0"
+                      className="w-full px-4 py-2 md:py-3 border border-gray-200 text-xs md:text-sm font-light text-black focus:outline-none focus:border-gray-400"
+                    />
+                  </div>
+
+                  {/* Amount Max */}
+                  <div>
+                    <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-1">
+                      Max Amount
+                    </label>
+                    <input
+                      type="number"
+                      value={amountMax}
+                      onChange={(e) => setAmountMax(e.target.value)}
+                      placeholder="999999"
+                      className="w-full px-4 py-2 md:py-3 border border-gray-200 text-xs md:text-sm font-light text-black focus:outline-none focus:border-gray-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Clear Filters Button */}
+                {(dateFrom || dateTo || amountMin || amountMax || searchQuery || statusFilter !== 'all' || typeFilter !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setDateFrom('')
+                      setDateTo('')
+                      setAmountMin('')
+                      setAmountMax('')
+                      setSearchQuery('')
+                      setStatusFilter('all')
+                      setTypeFilter('all')
+                    }}
+                    className="text-xs md:text-sm font-light text-gray-600 hover:text-black transition-colors"
+                  >
+                    Clear all filters
+                  </button>
+                )}
 
                 {/* Results count */}
                 <div className="text-sm font-light text-gray-600">
@@ -1807,8 +2219,340 @@ export default function DashboardClient({ member, transactions, documents, settl
               </div>
             </div>
           )}
+
+          {activeTab === 'counterparties' && (
+            <div className="max-w-6xl">
+              {/* Page Header */}
+              <div className="mb-8 md:mb-12">
+                <h1 className="text-3xl md:text-4xl font-light text-black mb-2">Counterparties</h1>
+                <p className="text-gray-600 font-light">
+                  View and analyze your trading relationships
+                </p>
+              </div>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+                <div className="border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users size={16} strokeWidth={1} className="text-black" />
+                    <span className="text-xs font-light uppercase tracking-wider text-gray-600">
+                      Total Counterparties
+                    </span>
+                  </div>
+                  <div className="text-3xl font-light text-black">{counterpartyAnalytics.length}</div>
+                </div>
+
+                <div className="border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Activity size={16} strokeWidth={1} className="text-black" />
+                    <span className="text-xs font-light uppercase tracking-wider text-gray-600">
+                      Total Transactions
+                    </span>
+                  </div>
+                  <div className="text-3xl font-light text-black">{transactions.length}</div>
+                </div>
+
+                <div className="border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <DollarSign size={16} strokeWidth={1} className="text-black" />
+                    <span className="text-xs font-light uppercase tracking-wider text-gray-600">
+                      Total Volume
+                    </span>
+                  </div>
+                  <div className="text-3xl font-light text-black">
+                    ${counterpartyAnalytics.reduce((sum, c) => sum + c.totalVolume, 0).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Counterparties Table */}
+              {counterpartyAnalytics.length > 0 ? (
+                <div className="border border-gray-200 overflow-x-auto">
+                  <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[800px]" style={{ gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr 1.5fr' }}>
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-center">Transactions</div>
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Total Volume</div>
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Net Position</div>
+                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Last Transaction</div>
+                  </div>
+                  {counterpartyAnalytics.map(cp => (
+                    <div
+                      key={cp.name}
+                      className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[800px]"
+                      style={{ gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr 1.5fr' }}
+                    >
+                      <div className="text-sm font-light text-black">{cp.name}</div>
+                      <div className="text-sm font-light text-gray-700 text-center">{cp.totalTransactions}</div>
+                      <div className="text-sm font-light text-black text-right">
+                        ${cp.totalVolume.toLocaleString()}
+                      </div>
+                      <div className={`text-sm font-light text-right ${cp.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {cp.netPosition >= 0 ? '+' : ''}${cp.netPosition.toLocaleString()}
+                      </div>
+                      <div className="text-sm font-light text-gray-700 text-right">{cp.lastTransactionDate}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border border-gray-200 p-12 text-center">
+                  <Users size={48} strokeWidth={1} className="mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-700 font-light">No counterparties yet</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'reports' && (
+            <div className="max-w-6xl">
+              {/* Page Header */}
+              <div className="mb-8 md:mb-12">
+                <h1 className="text-3xl md:text-4xl font-light text-black mb-2">Reports & Export</h1>
+                <p className="text-gray-600 font-light">
+                  Generate and download reports for accounting and analysis
+                </p>
+              </div>
+
+              {/* Export Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Transaction Export */}
+                <div className="border border-gray-200 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Download size={20} strokeWidth={1} className="text-black" />
+                    <h2 className="text-xl font-light text-black">Transaction Export</h2>
+                  </div>
+                  <p className="text-sm font-light text-gray-600 mb-6">
+                    Export all transactions to CSV format for accounting software or spreadsheet analysis.
+                  </p>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                          From Date
+                        </label>
+                        <input
+                          type="date"
+                          value={dateFrom}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                          To Date
+                        </label>
+                        <input
+                          type="date"
+                          value={dateTo}
+                          onChange={(e) => setDateTo(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-200 text-sm font-light text-black focus:outline-none focus:border-gray-400"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={exportToCSV}
+                      className="w-full px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Download size={16} />
+                      Export Transactions CSV
+                    </button>
+                    <p className="text-xs font-light text-gray-500">
+                      {filteredTransactions.length} transactions will be exported
+                    </p>
+                  </div>
+                </div>
+
+                {/* Counterparty Report */}
+                <div className="border border-gray-200 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <BarChart3 size={20} strokeWidth={1} className="text-black" />
+                    <h2 className="text-xl font-light text-black">Counterparty Summary</h2>
+                  </div>
+                  <p className="text-sm font-light text-gray-600 mb-6">
+                    Export a summary of all counterparty relationships with transaction volumes and net positions.
+                  </p>
+                  <button
+                    onClick={() => {
+                      const csvRows = []
+                      csvRows.push(['Counterparty', 'Total Transactions', 'Total Volume', 'Net Position', 'Last Transaction Date'].join(','))
+                      counterpartyAnalytics.forEach(cp => {
+                        csvRows.push([
+                          `"${cp.name}"`,
+                          cp.totalTransactions,
+                          cp.totalVolume,
+                          cp.netPosition,
+                          cp.lastTransactionDate
+                        ].join(','))
+                      })
+                      const csvContent = csvRows.join('\n')
+                      const blob = new Blob([csvContent], { type: 'text/csv' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `bosun-counterparties-${new Date().toISOString().split('T')[0]}.csv`
+                      document.body.appendChild(a)
+                      a.click()
+                      document.body.removeChild(a)
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="w-full px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Download size={16} />
+                    Export Counterparty Report
+                  </button>
+                  <p className="text-xs font-light text-gray-500 mt-4">
+                    {counterpartyAnalytics.length} counterparties will be exported
+                  </p>
+                </div>
+              </div>
+
+              {/* CSV Import Template */}
+              <div className="border border-gray-200 p-6 bg-gray-50">
+                <h3 className="text-lg font-light text-black mb-4">Bulk Import Template</h3>
+                <p className="text-sm font-light text-gray-700 mb-4">
+                  Download a CSV template to use for bulk transaction imports. Fill in the required fields and upload via the Transactions page.
+                </p>
+                <button
+                  onClick={() => {
+                    const template = 'Date,Counterparty,CounterpartyId,Amount,Type,Reference,Description\n2025-01-15,Example Corp,uuid-here,1000,Receivable,REF-001,Sample transaction'
+                    const blob = new Blob([template], { type: 'text/csv' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'bosun-import-template.csv'
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                  }}
+                  className="px-6 py-3 border border-gray-300 text-black text-sm font-light hover:bg-gray-100 transition-colors flex items-center gap-2"
+                >
+                  <Download size={16} />
+                  Download Import Template
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
+
+      {/* Bulk Import Modal */}
+      {showBulkImport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowBulkImport(false)}>
+          <div className="bg-white p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-light text-black mb-2">Bulk Import Transactions</h2>
+                <p className="text-sm font-light text-gray-600">
+                  Upload a CSV file to import multiple transactions at once
+                </p>
+              </div>
+              <button
+                onClick={() => setShowBulkImport(false)}
+                className="p-2 hover:bg-gray-50 transition-colors"
+              >
+                <X size={20} strokeWidth={1} className="text-black" />
+              </button>
+            </div>
+
+            {importError && (
+              <div className="mb-6 border border-red-200 bg-red-50 p-4 text-sm font-light text-red-600 whitespace-pre-wrap">
+                {importError}
+              </div>
+            )}
+
+            <div className="space-y-6">
+              {/* File Upload */}
+              <div>
+                <label className="block text-xs font-light uppercase tracking-wider text-gray-600 mb-2">
+                  CSV File
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center hover:border-gray-400 transition-colors">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileImport}
+                    className="hidden"
+                    id="csv-import"
+                  />
+                  <label htmlFor="csv-import" className="cursor-pointer">
+                    {importFile ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-sm text-green-600">✓ {importFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImportFile(null)
+                            setImportPreview([])
+                          }}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <Upload className="mx-auto mb-2 text-gray-400" size={32} strokeWidth={1} />
+                        <p className="text-sm font-light text-gray-600">Click to upload CSV file</p>
+                        <p className="text-xs font-light text-gray-500 mt-1">Maximum 1000 transactions per upload</p>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              </div>
+
+              {/* Preview */}
+              {importPreview.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-light uppercase tracking-wider text-gray-600 mb-3">
+                    Preview (first 5 rows)
+                  </h3>
+                  <div className="border border-gray-200 overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {Object.keys(importPreview[0]).map(header => (
+                            <th key={header} className="px-4 py-2 text-left text-xs font-light uppercase tracking-wider text-gray-700">
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importPreview.map((row, idx) => (
+                          <tr key={idx} className="border-t border-gray-200">
+                            {Object.values(row).map((value: any, i) => (
+                              <td key={i} className="px-4 py-2 font-light text-black">
+                                {value}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => setShowBulkImport(false)}
+                  className="px-6 py-3 bg-gray-50 text-black text-sm font-light hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={processBulkImport}
+                  disabled={!importFile || importing}
+                  className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {importing ? 'Importing...' : 'Import Transactions'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
