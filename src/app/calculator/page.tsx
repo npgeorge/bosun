@@ -39,9 +39,10 @@ export default function SavingsCalculatorPage() {
     const monthlyFeeSavings = currentMonthlyFees - bosunMonthlyFees
 
     // Working capital calculation
-    // Assuming 4 days faster settlement (same-day vs 3-5 day traditional rails)
+    // Traditional banking: ~5 days average (4 business days + weekends + cutoff times)
+    // Bosun: Same-day, 24/7/365
     const annualVolume = volume * 12
-    const daysAccelerated = 4
+    const daysAccelerated = 5
 
     // Working capital unlocked = (Annual volume / 365 days) × days accelerated
     const workingCapitalUnlocked = (annualVolume / 365) * daysAccelerated
@@ -247,7 +248,10 @@ export default function SavingsCalculatorPage() {
                   </div>
                 </div>
                 <p className="text-sm font-light text-gray-400 mt-3">
-                  ~{Math.round((savings.workingCapitalUnlocked / parseFloat(monthlyVolume)) * 100)}% of monthly volume tied up in transit
+                  ~{Math.round((savings.workingCapitalUnlocked / parseFloat(monthlyVolume)) * 100)}% of monthly volume locked due to business hours, weekends, and settlement delays
+                </p>
+                <p className="text-xs font-light text-gray-500 mt-2 italic">
+                  Maritime operates 24/7 — your capital should too
                 </p>
               </div>
 
@@ -306,14 +310,23 @@ export default function SavingsCalculatorPage() {
             <div>
               <h4 className="font-normal mb-2">Working Capital Requirements</h4>
               <p className="text-xs text-gray-600 mb-1">
-                Traditional Float = (Annual Volume ÷ 365 days) × Settlement Days
+                Traditional Float = (Annual Volume ÷ 365 days) × Settlement Days (5 days average)
               </p>
+              <p className="text-xs text-gray-600 mb-2">
+                Traditional banking settlement averages 5 calendar days due to:
+              </p>
+              <ul className="text-xs text-gray-600 list-disc list-inside ml-2 mb-3 space-y-1">
+                <li>4 business days for wire transfers</li>
+                <li>Weekend delays (transactions initiated Thursday-Friday add 2+ days)</li>
+                <li>Banking cutoff times (afternoon transactions delayed to next day)</li>
+                <li>Business hours only (9-5, Monday-Friday)</li>
+              </ul>
               <p className="text-xs text-gray-600 mb-3">
-                With traditional 4-day settlements, this amount is constantly tied up "in flight" — waiting for payments to clear.
+                This amount is constantly tied up "in flight" — waiting for payments to clear.
                 It represents the average daily cash balance you need to maintain as a buffer for unsettled transactions.
               </p>
               <p className="text-xs text-gray-600 mb-1">
-                <strong>With Bosun:</strong> Same-day settlement means $0 trapped in transit.
+                <strong>With Bosun:</strong> Same-day settlement, 24/7/365 operations means $0 trapped in transit.
               </p>
               <p className="text-xs text-gray-600">
                 <strong>Capital Freed:</strong> The difference is permanently available for your operations, debt reduction, or investment.
@@ -332,8 +345,8 @@ export default function SavingsCalculatorPage() {
               <p className="text-xs text-gray-500 italic">
                 <strong>Disclaimer:</strong> These calculations are estimates based on typical industry scenarios.
                 Actual savings vary based on your transaction patterns, volume, current banking relationships,
-                and settlement preferences. Settlement acceleration assumes traditional 3-5 day wire transfers
-                vs. Bosun's same-day settlement capability.
+                and settlement preferences. Settlement acceleration assumes traditional wire transfers average 5 calendar days
+                (including weekends and banking hour limitations) vs. Bosun's same-day, 24/7/365 settlement capability.
               </p>
             </div>
           </div>
