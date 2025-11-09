@@ -39,9 +39,10 @@ export default function SavingsCalculatorPage() {
     const monthlyFeeSavings = currentMonthlyFees - bosunMonthlyFees
 
     // Working capital calculation
-    // Assuming 4 days faster settlement (same-day vs 3-5 day traditional rails)
+    // Traditional banking: ~4.8 days average based on cutoff times and weekends
+    // Bosun: Same-day, 24/7/365
     const annualVolume = volume * 12
-    const daysAccelerated = 4
+    const daysAccelerated = 4.8
 
     // Working capital unlocked = (Annual volume / 365 days) × days accelerated
     const workingCapitalUnlocked = (annualVolume / 365) * daysAccelerated
@@ -113,6 +114,27 @@ export default function SavingsCalculatorPage() {
           </h1>
           <p className="text-lg md:text-xl font-light text-gray-600 max-w-3xl mx-auto">
             See how much you could save by switching to Bosun's modern maritime settlement platform.
+          </p>
+        </div>
+      </section>
+
+      {/* Key Insight Summary */}
+      <section className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="bg-blue-50 border border-blue-200 p-6 md:p-8 rounded">
+          <h2 className="text-xl md:text-2xl font-light text-blue-900 mb-4">The Hidden Cost of Traditional Banking</h2>
+          <p className="text-base font-light text-blue-800 mb-4">
+            Traditional wire transfers average <strong>4.8 calendar days</strong> to settle due to:
+          </p>
+          <ul className="text-sm font-light text-blue-800 space-y-2 mb-4 ml-4">
+            <li>• Business hours only (9am-5pm, Monday-Friday)</li>
+            <li>• 2pm cutoff times (afternoon transactions delayed to next day)</li>
+            <li>• Weekend delays (Friday transactions don't start until the following week)</li>
+          </ul>
+          <p className="text-base font-light text-blue-900">
+            <strong>Result:</strong> ~16% of your monthly volume is constantly locked in transit, unavailable for operations.
+          </p>
+          <p className="text-sm font-light text-blue-700 mt-4 italic">
+            Maritime operates 24/7 — your capital should too.
           </p>
         </div>
       </section>
@@ -247,7 +269,10 @@ export default function SavingsCalculatorPage() {
                   </div>
                 </div>
                 <p className="text-sm font-light text-gray-400 mt-3">
-                  ~{Math.round((savings.workingCapitalUnlocked / parseFloat(monthlyVolume)) * 100)}% of monthly volume tied up in transit
+                  ~{Math.round((savings.workingCapitalUnlocked / parseFloat(monthlyVolume)) * 100)}% of monthly volume locked due to business hours, weekends, and settlement delays
+                </p>
+                <p className="text-xs font-light text-gray-500 mt-2 italic">
+                  Maritime operates 24/7 — your capital should too
                 </p>
               </div>
 
@@ -306,14 +331,54 @@ export default function SavingsCalculatorPage() {
             <div>
               <h4 className="font-normal mb-2">Working Capital Requirements</h4>
               <p className="text-xs text-gray-600 mb-1">
-                Traditional Float = (Annual Volume ÷ 365 days) × Settlement Days
+                Traditional Float = (Annual Volume ÷ 365 days) × Settlement Days (4.8 days average)
               </p>
+              <p className="text-xs text-gray-600 mb-2">
+                Traditional banking settlement averages <strong>4.8 calendar days</strong> based on detailed analysis:
+              </p>
+              <div className="bg-white border border-gray-200 p-3 mb-3 text-xs">
+                <p className="text-gray-600 mb-2 font-medium">Weighted Average Breakdown (assuming even transaction distribution):</p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-1 text-gray-600 font-normal">Time Period</th>
+                      <th className="text-right py-1 text-gray-600 font-normal">% of Txns</th>
+                      <th className="text-right py-1 text-gray-600 font-normal">Settlement</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-700">
+                    <tr className="border-b border-gray-100">
+                      <td className="py-1">Mon-Thu before 2pm cutoff</td>
+                      <td className="text-right">50%</td>
+                      <td className="text-right">4 days</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-1">Mon-Thu after 2pm cutoff</td>
+                      <td className="text-right">30%</td>
+                      <td className="text-right">5 days</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="py-1">Friday before 2pm cutoff</td>
+                      <td className="text-right">12.5%</td>
+                      <td className="text-right">6 days</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1">Friday after 2pm cutoff</td>
+                      <td className="text-right">7.5%</td>
+                      <td className="text-right">7 days</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p className="text-gray-500 mt-2 italic">
+                  = (50% × 4) + (30% × 5) + (12.5% × 6) + (7.5% × 7) = 4.8 days
+                </p>
+              </div>
               <p className="text-xs text-gray-600 mb-3">
-                With traditional 4-day settlements, this amount is constantly tied up "in flight" — waiting for payments to clear.
+                This amount is constantly tied up "in flight" — waiting for payments to clear.
                 It represents the average daily cash balance you need to maintain as a buffer for unsettled transactions.
               </p>
               <p className="text-xs text-gray-600 mb-1">
-                <strong>With Bosun:</strong> Same-day settlement means $0 trapped in transit.
+                <strong>With Bosun:</strong> Same-day settlement, 24/7/365 operations means $0 trapped in transit.
               </p>
               <p className="text-xs text-gray-600">
                 <strong>Capital Freed:</strong> The difference is permanently available for your operations, debt reduction, or investment.
@@ -332,8 +397,8 @@ export default function SavingsCalculatorPage() {
               <p className="text-xs text-gray-500 italic">
                 <strong>Disclaimer:</strong> These calculations are estimates based on typical industry scenarios.
                 Actual savings vary based on your transaction patterns, volume, current banking relationships,
-                and settlement preferences. Settlement acceleration assumes traditional 3-5 day wire transfers
-                vs. Bosun's same-day settlement capability.
+                and settlement preferences. Settlement acceleration assumes traditional wire transfers average 4.8 calendar days
+                (weighted average including cutoff times, weekends, and banking hour limitations) vs. Bosun's same-day, 24/7/365 settlement capability.
               </p>
             </div>
           </div>
