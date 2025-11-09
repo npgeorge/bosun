@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { signUp } from '@/lib/supabase/auth'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import ShipWheelLogo from '@/components/ShipWheelLogo'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -172,10 +173,13 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-white py-8 md:py-12">
       <div className="max-w-2xl mx-auto px-4 md:px-6">
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-4xl font-light tracking-wider mb-2 text-black">BOSUN</h1>
+        <Link href="/" className="flex flex-col items-center justify-center mb-8 md:mb-12 hover:opacity-60 transition-opacity">
+          <div className="flex items-center gap-3 mb-2">
+            <ShipWheelLogo size={32} className="text-black" />
+            <div className="text-3xl md:text-4xl font-light tracking-wider text-black">BOSUN</div>
+          </div>
           <p className="text-xs md:text-sm font-light text-gray-600">Create Your Account</p>
-        </div>
+        </Link>
 
         <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
           {error && (

@@ -83,10 +83,13 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <div className="flex items-center justify-center gap-3 mb-2">
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center justify-center gap-3 mb-2 hover:opacity-60 transition-opacity"
+            >
               <ShipWheelLogo size={32} className="text-black" />
               <div className="text-2xl font-light tracking-wider">BOSUN</div>
-            </div>
+            </button>
           </div>
 
           <div className="bg-white border border-gray-200 p-8">
@@ -115,10 +118,13 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <div className="flex items-center justify-center gap-3 mb-2">
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center justify-center gap-3 mb-2 hover:opacity-60 transition-opacity"
+            >
               <ShipWheelLogo size={32} className="text-black" />
               <div className="text-2xl font-light tracking-wider">BOSUN</div>
-            </div>
+            </button>
           </div>
 
           <div className="bg-white border border-gray-200 p-8">
@@ -137,10 +143,13 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
-            <div className="flex items-center justify-center gap-3 mb-2">
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center justify-center gap-3 mb-2 hover:opacity-60 transition-opacity"
+            >
               <ShipWheelLogo size={32} className="text-black" />
               <div className="text-2xl font-light tracking-wider">BOSUN</div>
-            </div>
+            </button>
           </div>
 
           <div className="bg-white border border-gray-200 p-8">
@@ -209,10 +218,13 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-2">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center justify-center gap-3 mb-2 hover:opacity-60 transition-opacity"
+          >
             <ShipWheelLogo size={32} className="text-black" />
             <div className="text-2xl font-light tracking-wider">BOSUN</div>
-          </div>
+          </button>
         </div>
 
         <div className="bg-white border border-gray-200 p-8">
