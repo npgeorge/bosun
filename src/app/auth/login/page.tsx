@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from '@/lib/supabase/auth'
 import Link from 'next/link'
+import ShipWheelLogo from '@/components/ShipWheelLogo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -32,10 +33,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-4xl font-light tracking-wider mb-2 text-black">BOSUN</h1>
+        <Link href="/" className="flex flex-col items-center justify-center mb-8 md:mb-12 hover:opacity-60 transition-opacity">
+          <div className="flex items-center gap-3 mb-2">
+            <ShipWheelLogo size={32} className="text-black" />
+            <div className="text-3xl md:text-4xl font-light tracking-wider text-black">BOSUN</div>
+          </div>
           <p className="text-xs md:text-sm font-light text-gray-600">Maritime Settlement Platform</p>
-        </div>
+        </Link>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
