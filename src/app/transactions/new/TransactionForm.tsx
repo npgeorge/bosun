@@ -234,7 +234,7 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
                     : 'border-gray-200 text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <div className="font-medium mb-1">They Owe You</div>
+                <div className="font-medium mb-1">Receivable</div>
                 <div className="text-xs">You are owed money</div>
               </button>
               <button
@@ -246,7 +246,7 @@ export default function TransactionForm({ currentMemberId, members }: Transactio
                     : 'border-gray-200 text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <div className="font-medium mb-1">You Owe Them</div>
+                <div className="font-medium mb-1">Payable</div>
                 <div className="text-xs">You owe money</div>
               </button>
             </div>

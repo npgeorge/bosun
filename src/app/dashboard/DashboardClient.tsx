@@ -616,9 +616,17 @@ export default function DashboardClient({ member, transactions, documents, settl
                 )}
               </button>
 
+              {/* Notifications Backdrop */}
+              {showNotifications && (
+                <div
+                  className="fixed inset-0 z-40 sm:hidden"
+                  onClick={() => setShowNotifications(false)}
+                />
+              )}
+
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 shadow-lg z-50 max-h-96 overflow-y-auto">
+                <div className="fixed sm:absolute right-4 sm:right-0 left-4 sm:left-auto mt-2 sm:w-80 max-w-sm bg-white border border-gray-200 shadow-lg z-50 max-h-96 overflow-y-auto">
                   <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="font-light text-black">Notifications</h3>
                     <button
