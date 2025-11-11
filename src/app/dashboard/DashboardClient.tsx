@@ -931,36 +931,63 @@ export default function DashboardClient({ member, transactions, documents, settl
                   </button>
                 </div>
                 {transactions.slice(0, 4).length > 0 ? (
-                  <div className="border border-gray-200 overflow-x-auto">
-                    <div className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[640px]">
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Amount</div>
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
-                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Status</div>
-                    </div>
-                    {transactions.slice(0, 4).map(tx => (
-                      <div key={tx.id} className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[640px]">
-                        <div className="text-sm font-light text-black">{tx.counterparty}</div>
-                        <div className={`text-sm font-light ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}>
-                          {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
-                        </div>
-                        <div className="text-sm font-light text-gray-700">{tx.date}</div>
-                        <div>
-                          <span className={`inline-block px-3 py-1 text-xs font-light ${
-                            tx.status === 'settled' ? 'bg-gray-100 text-gray-700' :
-                            tx.status === 'confirmed' ? 'bg-gray-50 text-black' :
-                            'bg-gray-50 text-gray-600'
-                          }`}>
-                            {tx.status}
-                          </span>
-                        </div>
+                  <>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block border border-gray-200">
+                      <div className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
+                        <div className="text-xs font-light uppercase tracking-wider text-gray-700">Amount</div>
+                        <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
+                        <div className="text-xs font-light uppercase tracking-wider text-gray-700">Status</div>
                       </div>
-                    ))}
-                  </div>
+                      {transactions.slice(0, 4).map(tx => (
+                        <div key={tx.id} className="grid grid-cols-4 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors">
+                          <div className="text-sm font-light text-black">{tx.counterparty}</div>
+                          <div className={`text-sm font-light ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}>
+                            {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
+                          </div>
+                          <div className="text-sm font-light text-gray-700">{tx.date}</div>
+                          <div>
+                            <span className={`inline-block px-3 py-1 text-xs font-light ${
+                              tx.status === 'settled' ? 'bg-gray-100 text-gray-700' :
+                              tx.status === 'confirmed' ? 'bg-gray-50 text-black' :
+                              'bg-gray-50 text-gray-600'
+                            }`}>
+                              {tx.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3">
+                      {transactions.slice(0, 4).map(tx => (
+                        <div key={tx.id} className="border border-gray-200 p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="text-sm font-light text-black">{tx.counterparty}</div>
+                            <span className={`inline-block px-3 py-1 text-xs font-light ${
+                              tx.status === 'settled' ? 'bg-gray-100 text-gray-700' :
+                              tx.status === 'confirmed' ? 'bg-gray-50 text-black' :
+                              'bg-gray-50 text-gray-600'
+                            }`}>
+                              {tx.status}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className={`text-lg font-light ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}>
+                              {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
+                            </div>
+                            <div className="text-sm font-light text-gray-600">{tx.date}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="border border-gray-200 p-12 text-center">
                     <p className="text-gray-700 font-light mb-4">No transactions yet</p>
-                    <button 
+                    <button
                       onClick={() => router.push('/transactions/new')}
                       className="px-6 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition-colors"
                     >
@@ -1319,78 +1346,126 @@ export default function DashboardClient({ member, transactions, documents, settl
 
               {/* Transactions Table */}
               {filteredTransactions.length > 0 ? (
-                <div className="border border-gray-200 overflow-x-auto">
-                  <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[900px]" style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Type</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Amount</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Status</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-center">Docs</div>
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block border border-gray-200 overflow-x-auto">
+                    <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50" style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Date</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Type</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Amount</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Status</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-center">Docs</div>
+                    </div>
+                    {filteredTransactions.map(tx => (
+                      <div
+                        key={tx.id}
+                        className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                        style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}
+                      >
+                        <div
+                          onClick={() => setSelectedTransaction(tx)}
+                          className="text-sm font-light text-gray-700 cursor-pointer"
+                        >{tx.date}</div>
+                        <div
+                          onClick={() => setSelectedTransaction(tx)}
+                          className="text-sm font-light text-black cursor-pointer"
+                        >{tx.counterparty}</div>
+                        <div
+                          onClick={() => setSelectedTransaction(tx)}
+                          className="text-sm font-light text-gray-600 cursor-pointer"
+                        >{tx.reference || '—'}</div>
+                        <div
+                          onClick={() => setSelectedTransaction(tx)}
+                          className="text-sm font-light text-gray-700 cursor-pointer"
+                        >
+                          {tx.type === 'owed' ? 'Receivable' : 'Payable'}
+                        </div>
+                        <div
+                          onClick={() => setSelectedTransaction(tx)}
+                          className={`text-sm font-light cursor-pointer ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}
+                        >
+                          {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
+                        </div>
+                        <div
+                          onClick={() => setSelectedTransaction(tx)}
+                          className="cursor-pointer"
+                        >
+                          <span className={`inline-block px-3 py-1 text-xs font-light ${
+                            tx.status === 'settled' ? 'bg-gray-100 text-gray-700' :
+                            tx.status === 'confirmed' ? 'bg-gray-50 text-black' :
+                            'bg-gray-50 text-gray-600'
+                          }`}>
+                            {tx.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {tx.documentCount > 0 ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                viewTransactionDocuments(tx.id)
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 transition-colors rounded"
+                              title={`${tx.documentCount} document${tx.documentCount !== 1 ? 's' : ''}`}
+                            >
+                              <Paperclip size={16} strokeWidth={1} className="text-gray-600" />
+                              <span className="text-xs font-light text-gray-600">{tx.documentCount}</span>
+                            </button>
+                          ) : (
+                            <span className="text-xs font-light text-gray-400">—</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  {filteredTransactions.map(tx => (
-                    <div
-                      key={tx.id}
-                      className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[900px]"
-                      style={{ gridTemplateColumns: '110px 2fr 1.5fr 110px 130px 100px 80px' }}
-                    >
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {filteredTransactions.map(tx => (
                       <div
+                        key={tx.id}
                         onClick={() => setSelectedTransaction(tx)}
-                        className="text-sm font-light text-gray-700 cursor-pointer"
-                      >{tx.date}</div>
-                      <div
-                        onClick={() => setSelectedTransaction(tx)}
-                        className="text-sm font-light text-black cursor-pointer"
-                      >{tx.counterparty}</div>
-                      <div
-                        onClick={() => setSelectedTransaction(tx)}
-                        className="text-sm font-light text-gray-600 cursor-pointer"
-                      >{tx.reference || '—'}</div>
-                      <div
-                        onClick={() => setSelectedTransaction(tx)}
-                        className="text-sm font-light text-gray-700 cursor-pointer"
+                        className="border border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
                       >
-                        {tx.type === 'owed' ? 'Receivable' : 'Payable'}
-                      </div>
-                      <div
-                        onClick={() => setSelectedTransaction(tx)}
-                        className={`text-sm font-light cursor-pointer ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}
-                      >
-                        {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
-                      </div>
-                      <div
-                        onClick={() => setSelectedTransaction(tx)}
-                        className="cursor-pointer"
-                      >
-                        <span className={`inline-block px-3 py-1 text-xs font-light ${
-                          tx.status === 'settled' ? 'bg-gray-100 text-gray-700' :
-                          tx.status === 'confirmed' ? 'bg-gray-50 text-black' :
-                          'bg-gray-50 text-gray-600'
-                        }`}>
-                          {tx.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-center">
-                        {tx.documentCount > 0 ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              viewTransactionDocuments(tx.id)
-                            }}
-                            className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 transition-colors rounded"
-                            title={`${tx.documentCount} document${tx.documentCount !== 1 ? 's' : ''}`}
-                          >
-                            <Paperclip size={16} strokeWidth={1} className="text-gray-600" />
-                            <span className="text-xs font-light text-gray-600">{tx.documentCount}</span>
-                          </button>
-                        ) : (
-                          <span className="text-xs font-light text-gray-400">—</span>
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="text-sm font-light text-black mb-1">{tx.counterparty}</div>
+                            <div className="text-xs font-light text-gray-600">{tx.date}</div>
+                          </div>
+                          <span className={`inline-block px-3 py-1 text-xs font-light ${
+                            tx.status === 'settled' ? 'bg-gray-100 text-gray-700' :
+                            tx.status === 'confirmed' ? 'bg-gray-50 text-black' :
+                            'bg-gray-50 text-gray-600'
+                          }`}>
+                            {tx.status}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className={`text-lg font-light ${tx.type === 'owed' ? 'text-black' : 'text-gray-700'}`}>
+                            {tx.type === 'owed' ? '+' : '-'}${tx.amount.toLocaleString()}
+                          </div>
+                          <div className="text-xs font-light text-gray-600">
+                            {tx.type === 'owed' ? 'Receivable' : 'Payable'}
+                          </div>
+                        </div>
+                        {tx.reference && (
+                          <div className="text-xs font-light text-gray-600 mb-2">
+                            Ref: {tx.reference}
+                          </div>
+                        )}
+                        {tx.documentCount > 0 && (
+                          <div className="flex items-center gap-1 text-xs font-light text-gray-600">
+                            <Paperclip size={14} strokeWidth={1} />
+                            <span>{tx.documentCount} document{tx.documentCount !== 1 ? 's' : ''}</span>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </>
+
               ) : (
                 <div className="border border-gray-200 p-12 text-center">
                   <p className="text-gray-700 font-light mb-4">
@@ -1616,8 +1691,10 @@ export default function DashboardClient({ member, transactions, documents, settl
                   {documents.filter(d => d.source === 'registration').length > 0 && (
                     <div className="mb-8">
                       <h2 className="text-xl font-light mb-4 text-black">Registration Documents</h2>
-                      <div className="border border-gray-200 overflow-x-auto">
-                        <div className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[800px]">
+
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block border border-gray-200 overflow-x-auto">
+                        <div className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Document Name</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Type</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Size</div>
@@ -1627,7 +1704,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                         {documents.filter(d => d.source === 'registration').map(doc => (
                           <div
                             key={doc.id}
-                            className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[800px]"
+                            className="grid grid-cols-5 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
                           >
                             <div className="text-sm font-light text-black flex items-center gap-2">
                               <FileText size={16} strokeWidth={1} className="text-gray-400" />
@@ -1650,6 +1727,34 @@ export default function DashboardClient({ member, transactions, documents, settl
                           </div>
                         ))}
                       </div>
+
+                      {/* Mobile Card View */}
+                      <div className="md:hidden space-y-3">
+                        {documents.filter(d => d.source === 'registration').map(doc => (
+                          <div key={doc.id} className="border border-gray-200 p-4">
+                            <div className="flex items-start gap-2 mb-3">
+                              <FileText size={16} strokeWidth={1} className="text-gray-400 mt-1" />
+                              <div className="flex-1">
+                                <div className="text-sm font-light text-black mb-1">{doc.name}</div>
+                                <div className="text-xs font-light text-gray-600">{doc.type}</div>
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center mb-3 text-xs font-light text-gray-600">
+                              <span>{formatFileSize(doc.size)}</span>
+                              <span>{formatDate(doc.uploadedAt)}</span>
+                            </div>
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors"
+                            >
+                              <Download size={14} strokeWidth={1} />
+                              Download
+                            </a>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -1657,8 +1762,10 @@ export default function DashboardClient({ member, transactions, documents, settl
                   {documents.filter(d => d.source === 'transaction').length > 0 && (
                     <div>
                       <h2 className="text-xl font-light mb-4 text-black">Transaction Documents</h2>
-                      <div className="border border-gray-200 overflow-x-auto">
-                        <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[900px]">
+
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block border border-gray-200 overflow-x-auto">
+                        <div className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50">
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Document Name</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Reference</div>
                           <div className="text-xs font-light uppercase tracking-wider text-gray-700">Trade Date</div>
@@ -1669,7 +1776,7 @@ export default function DashboardClient({ member, transactions, documents, settl
                         {documents.filter(d => d.source === 'transaction').map(doc => (
                           <div
                             key={doc.id}
-                            className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[900px]"
+                            className="grid grid-cols-6 gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
                           >
                             <div className="text-sm font-light text-black flex items-center gap-2">
                               <FileText size={16} strokeWidth={1} className="text-gray-400" />
@@ -1688,6 +1795,42 @@ export default function DashboardClient({ member, transactions, documents, settl
                                 Download
                               </button>
                             </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Mobile Card View */}
+                      <div className="md:hidden space-y-3">
+                        {documents.filter(d => d.source === 'transaction').map(doc => (
+                          <div key={doc.id} className="border border-gray-200 p-4">
+                            <div className="flex items-start gap-2 mb-3">
+                              <FileText size={16} strokeWidth={1} className="text-gray-400 mt-1" />
+                              <div className="flex-1">
+                                <div className="text-sm font-light text-black mb-1">{doc.name}</div>
+                                <div className="text-xs font-light text-gray-600">Ref: {doc.transactionReference || '—'}</div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mb-3 text-xs font-light text-gray-600">
+                              <div>
+                                <span className="text-gray-500">Trade Date: </span>
+                                {doc.transactionDate || '—'}
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Size: </span>
+                                {formatFileSize(doc.size)}
+                              </div>
+                              <div className="col-span-2">
+                                <span className="text-gray-500">Uploaded: </span>
+                                {formatDate(doc.uploadedAt)}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => downloadDocument(doc.url, doc.name)}
+                              className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 text-black text-sm font-light hover:bg-gray-50 transition-colors"
+                            >
+                              <Download size={14} strokeWidth={1} />
+                              Download
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -2267,32 +2410,64 @@ export default function DashboardClient({ member, transactions, documents, settl
 
               {/* Counterparties Table */}
               {counterpartyAnalytics.length > 0 ? (
-                <div className="border border-gray-200 overflow-x-auto">
-                  <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50 min-w-[800px]" style={{ gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr 1.5fr' }}>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-center">Transactions</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Total Volume</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Net Position</div>
-                    <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Last Transaction</div>
-                  </div>
-                  {counterpartyAnalytics.map(cp => (
-                    <div
-                      key={cp.name}
-                      className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors min-w-[800px]"
-                      style={{ gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr 1.5fr' }}
-                    >
-                      <div className="text-sm font-light text-black">{cp.name}</div>
-                      <div className="text-sm font-light text-gray-700 text-center">{cp.totalTransactions}</div>
-                      <div className="text-sm font-light text-black text-right">
-                        ${cp.totalVolume.toLocaleString()}
-                      </div>
-                      <div className={`text-sm font-light text-right ${cp.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {cp.netPosition >= 0 ? '+' : ''}${cp.netPosition.toLocaleString()}
-                      </div>
-                      <div className="text-sm font-light text-gray-700 text-right">{cp.lastTransactionDate}</div>
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block border border-gray-200 overflow-x-auto">
+                    <div className="grid gap-4 px-6 py-4 border-b border-gray-200 bg-gray-50" style={{ gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr 1.5fr' }}>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700">Counterparty</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-center">Transactions</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Total Volume</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Net Position</div>
+                      <div className="text-xs font-light uppercase tracking-wider text-gray-700 text-right">Last Transaction</div>
                     </div>
-                  ))}
-                </div>
+                    {counterpartyAnalytics.map(cp => (
+                      <div
+                        key={cp.name}
+                        className="grid gap-4 px-6 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors"
+                        style={{ gridTemplateColumns: '2fr 1fr 1.5fr 1.5fr 1.5fr' }}
+                      >
+                        <div className="text-sm font-light text-black">{cp.name}</div>
+                        <div className="text-sm font-light text-gray-700 text-center">{cp.totalTransactions}</div>
+                        <div className="text-sm font-light text-black text-right">
+                          ${cp.totalVolume.toLocaleString()}
+                        </div>
+                        <div className={`text-sm font-light text-right ${cp.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {cp.netPosition >= 0 ? '+' : ''}${cp.netPosition.toLocaleString()}
+                        </div>
+                        <div className="text-sm font-light text-gray-700 text-right">{cp.lastTransactionDate}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {counterpartyAnalytics.map(cp => (
+                      <div key={cp.name} className="border border-gray-200 p-4">
+                        <div className="text-base font-light text-black mb-3">{cp.name}</div>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                          <div>
+                            <div className="text-xs font-light text-gray-500 mb-1">Transactions</div>
+                            <div className="text-sm font-light text-black">{cp.totalTransactions}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-light text-gray-500 mb-1">Total Volume</div>
+                            <div className="text-sm font-light text-black">${cp.totalVolume.toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-light text-gray-500 mb-1">Net Position</div>
+                            <div className={`text-sm font-light ${cp.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {cp.netPosition >= 0 ? '+' : ''}${cp.netPosition.toLocaleString()}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs font-light text-gray-500 mb-1">Last Transaction</div>
+                            <div className="text-sm font-light text-gray-700">{cp.lastTransactionDate}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="border border-gray-200 p-12 text-center">
                   <Users size={48} strokeWidth={1} className="mx-auto mb-4 text-gray-300" />
